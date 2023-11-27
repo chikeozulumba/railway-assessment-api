@@ -37,3 +37,6 @@ lerna-debug.log*
 # env files
 .env
 .env.*
+
+# Generated
+src/models
