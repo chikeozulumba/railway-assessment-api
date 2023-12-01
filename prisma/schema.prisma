@@ -17,22 +17,28 @@ datasource db {
 }
 
 enum UserProvider {
-  github
-  credentials
+  GITHUB
+  GOOGLE
+}
+
+enum UserStatus {
+  suspended
+  deleted
+  active
 }
 
 model User {
-  id              String       @id @default(auto()) @map("_id") @db.ObjectId
-  fullName        String       @map("full_name")
-  email           String?      @unique
-  provider        UserProvider @default(credentials)
-  username        String       @unique
-  password        String?
-  avatar          String?
-  emailVerifiedAt DateTime?    @map("email_verified_at")
-  createdAt       DateTime     @default(now()) @map("created_at")
-  updatedAt       DateTime     @default(now()) @updatedAt @map("updated_at")
+  id         String       @id @default(auto()) @map("_id") @db.ObjectId
+  fullName   String?      @map("full_name")
+  email      String?
+  providerId String       @map("provider_id")
+  provider   UserProvider
+  avatarUrl  String?      @map("avatar_url")
+  status     UserStatus   @default(active)
+  createdAt  DateTime     @default(now()) @map("created_at")
+  updatedAt  DateTime     @default(now()) @updatedAt @map("updated_at")
 
-  @@index([id, email])
+  @@unique([provider, email])
+  @@unique([provider, providerId])
   @@map("users")
 }

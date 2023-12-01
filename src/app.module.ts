@@ -5,6 +5,8 @@ import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { upperDirectiveTransformer } from './common/directives/upper-case.directive';
 import { ConfigModule } from './config/config.module';
 import { PrismaModule } from './prisma/prisma.module';
+import { UserModule } from './user/user.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -12,6 +14,7 @@ import { PrismaModule } from './prisma/prisma.module';
     PrismaModule,
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
+      playground: true,
       autoSchemaFile: 'schema.gql',
       transformSchema: (schema) => upperDirectiveTransformer(schema, 'upper'),
       installSubscriptionHandlers: true,
@@ -24,6 +27,8 @@ import { PrismaModule } from './prisma/prisma.module';
         ],
       },
     }),
+    UserModule,
+    AuthModule,
   ],
 })
 export class AppModule {}

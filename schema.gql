@@ -1,0 +1,92 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+directive @upper on FIELD_DEFINITION
+
+type UserCountAggregate {
+  id: Int!
+  fullName: Int!
+  email: Int!
+  providerId: Int!
+  provider: Int!
+  avatarUrl: Int!
+  status: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  _all: Int!
+}
+
+type UserMinAggregate {
+  id: String
+  fullName: String
+  email: String
+  providerId: String
+  provider: UserProvider
+  avatarUrl: String
+  status: UserStatus
+  createdAt: DateTime
+  updatedAt: DateTime
+}
+
+enum UserProvider {
+  GITHUB
+  GOOGLE
+}
+
+enum UserStatus {
+  suspended
+  deleted
+  active
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+type UserMaxAggregate {
+  id: String
+  fullName: String
+  email: String
+  providerId: String
+  provider: UserProvider
+  avatarUrl: String
+  status: UserStatus
+  createdAt: DateTime
+  updatedAt: DateTime
+}
+
+type User {
+  id: ID!
+  fullName: String
+  email: String
+  providerId: String!
+  provider: UserProvider!
+  avatarUrl: String
+  status: UserStatus!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type Query {
+  me: User!
+}
+
+type Mutation {
+  connectRailwayAccount(token: String!): User!
+  authorize(payload: AuthenticateDTO!): User!
+}
+
+input AuthenticateDTO {
+  provider: AuthProvider!
+  providerId: String!
+  fullName: String!
+  avatarUrl: String!
+  email: String!
+}
+
+enum AuthProvider {
+  GOOGLE
+  GITHUB
+}
