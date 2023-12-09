@@ -1,6 +1,8 @@
+import { UserProvider } from 'src/models';
+
 export enum AuthProvider {
-  GOOGLE = 'GOOGLE',
-  GITHUB = 'GITHUB',
+  google = 'google',
+  github = 'github',
 }
 
 export type AuthUser = {
@@ -19,5 +21,5 @@ export type AuthUser = {
     sign_in_provider: string;
   };
   uid: string;
-  provider: AuthProvider;
+  provider: UserProvider;
 };

@@ -16,9 +16,47 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum UserProvider {
-  GITHUB
-  GOOGLE
+model RailwayProfile {
+  id                 String           @id @default(auto()) @map("_id") @db.ObjectId
+  userId             String           @map("user_id") @db.ObjectId
+  user               User             @relation(fields: [userId], references: [id])
+  railwayId          String           @map("railway_id")
+  email              String?          @map("email")
+  name               String?          @map("name")
+  username           String?          @map("username")
+  avatar             String?          @map("avatar")
+  currentCost        String           @map("current_cost")
+  estimatedCost      String           @map("estimated_cost")
+  registrationStatus String           @map("registration_status") // ONBOARDED, REGISTERED, WAITLISTED
+  // tokenAssigned      String           @map("token_assigned")
+  status             String           @default("active") @map("status") // ACTIVE,INACTIVE
+
+  createdAt          DateTime         @default(now()) @map("created_at")
+  updatedAt          DateTime         @default(now()) @updatedAt @map("updated_at")
+  projects           RailwayProject[]
+
+  @@unique([railwayId])
+  @@map("railway_profile")
+}
+
+model RailwayProject {
+  id               String         @id @default(auto()) @map("_id") @db.ObjectId
+  userId           String         @map("user_id") @db.ObjectId
+  user             User           @relation(fields: [userId], references: [id])
+  railwayProfileId String         @map("railway_profile_id") @db.ObjectId
+  railwayProfile   RailwayProfile @relation(fields: [railwayProfileId], references: [id])
+  railwayProjectId String         @map("railway_project_id")
+  name             String?
+  description      String?
+  projectCreatedAt DateTime?      @map("project_cpdated_at")
+  projectUpdatedAt DateTime?      @map("project_updated_at")
+  prDeploys        Boolean?       @map("pr_deploys")
+  prForks          Boolean?       @map("pr_forks")
+
+  createdAt        DateTime       @default(now()) @map("created_at")
+  updatedAt        DateTime       @default(now()) @updatedAt @map("updated_at")
+
+  @@map("railway_projects")
 }
 
 enum UserStatus {
@@ -27,18 +65,42 @@ enum UserStatus {
   active
 }
 
-model User {
-  id         String       @id @default(auto()) @map("_id") @db.ObjectId
-  fullName   String?      @map("full_name")
-  email      String?
-  providerId String       @map("provider_id")
-  provider   UserProvider
-  avatarUrl  String?      @map("avatar_url")
-  status     UserStatus   @default(active)
-  createdAt  DateTime     @default(now()) @map("created_at")
-  updatedAt  DateTime     @default(now()) @updatedAt @map("updated_at")
+model RailwayToken {
+  id     String  @id @default(auto()) @map("_id") @db.ObjectId
+  userId String  @map("user_id") @db.ObjectId
+  user   User    @relation(fields: [userId], references: [id])
+  name   String? @map("name")
+  value  String  @map("value") @unique
 
-  @@unique([provider, email])
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@map("railway_tokens")
+}
+
+model User {
+  id                   String            @id @default(auto()) @map("_id") @db.ObjectId
+  fullName             String?           @map("full_name")
+  email                String?
+  providerId           String            @map("provider_id")
+  provider             UserAuthProvider?
+  avatarUrl            String?           @map("avatar_url")
+  activeRailwayToken   String?           @map("active_railway_token") @db.ObjectId
+  railwayAccountStatus String?           @map("railway_account_status")
+  status               UserStatus        @default(active)
+
+  createdAt            DateTime          @default(now()) @map("created_at")
+  updatedAt            DateTime          @default(now()) @updatedAt @map("updated_at")
+
+  profile  RailwayProfile[]
+  projects RailwayProject[]
+  tokens   RailwayToken[]
+
   @@unique([provider, providerId])
   @@map("users")
+}
+
+enum UserAuthProvider {
+  google
+  github
 }

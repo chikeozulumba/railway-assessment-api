@@ -3,10 +3,10 @@ import * as fs from 'fs';
 
 export class ConfigService {
   JWT_SECRET: string;
-  public readonly envConfig: { [key: string]: string };
+  private readonly env: { [key: string]: string };
 
   constructor() {
-    this.envConfig = {
+    this.env = {
       ...process.env,
       ...(process.env.NODE_ENV === 'production'
         ? {}
@@ -15,24 +15,21 @@ export class ConfigService {
   }
 
   get(key: string, throwError = true): any {
-    if (!this.envConfig[key] && throwError) {
-      throw new Error(key + ' - Config value is invalid.');
+    if (!this.env[key] && throwError) {
+      throw new Error(`${key} - Config value is invalid.`);
     } else {
-      const configVal = this.envConfig[key];
-      if (
-        configVal === 'true' ||
-        (typeof configVal === 'boolean' && configVal === true)
-      ) {
+      const value = this.env[key];
+      if (value === 'true' || (typeof value === 'boolean' && value === true)) {
         return true;
       }
       if (
-        configVal === 'false' ||
-        (typeof configVal === 'boolean' && configVal === false)
+        value === 'false' ||
+        (typeof value === 'boolean' && value === false)
       ) {
         return false;
       }
 
-      return configVal === '' ? undefined : configVal;
+      return value === '' ? undefined : value;
     }
   }
 }

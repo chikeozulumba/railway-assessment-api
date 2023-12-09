@@ -4,6 +4,219 @@
 
 directive @upper on FIELD_DEFINITION
 
+type RailwayProfileCountAggregate {
+  id: Int!
+  userId: Int!
+  railwayId: Int!
+  email: Int!
+  name: Int!
+  username: Int!
+  avatar: Int!
+  currentCost: Int!
+  estimatedCost: Int!
+  registrationStatus: Int!
+  status: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  _all: Int!
+}
+
+type RailwayProfileMinAggregate {
+  id: String
+  userId: String
+  railwayId: String
+  email: String
+  name: String
+  username: String
+  avatar: String
+  currentCost: String
+  estimatedCost: String
+  registrationStatus: String
+  status: String
+  createdAt: DateTime
+  updatedAt: DateTime
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+type RailwayProfileMaxAggregate {
+  id: String
+  userId: String
+  railwayId: String
+  email: String
+  name: String
+  username: String
+  avatar: String
+  currentCost: String
+  estimatedCost: String
+  registrationStatus: String
+  status: String
+  createdAt: DateTime
+  updatedAt: DateTime
+}
+
+type RailwayProfileCount {
+  projects: Int!
+}
+
+type RailwayProject {
+  id: ID!
+  userId: String!
+  railwayProfileId: String!
+  railwayProjectId: String!
+  name: String
+  description: String
+  projectCreatedAt: DateTime
+  projectUpdatedAt: DateTime
+  prDeploys: Boolean
+  prForks: Boolean
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  user: User!
+  railwayProfile: RailwayProfile!
+}
+
+type RailwayToken {
+  id: ID!
+  userId: String!
+  name: String
+  value: String!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  user: User!
+}
+
+type UserCount {
+  profile: Int!
+  projects: Int!
+  tokens: Int!
+}
+
+type User {
+  id: ID!
+  fullName: String
+  email: String
+  providerId: String!
+  provider: UserAuthProvider
+  avatarUrl: String
+  activeRailwayToken: String
+  railwayAccountStatus: String
+  status: UserStatus!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  profile: [RailwayProfile!]
+  projects: [RailwayProject!]
+  tokens: [RailwayToken!]
+  _count: UserCount!
+}
+
+enum UserAuthProvider {
+  google
+  github
+}
+
+enum UserStatus {
+  suspended
+  deleted
+  active
+}
+
+type RailwayProfile {
+  id: ID!
+  userId: String!
+  railwayId: String!
+  email: String
+  name: String
+  username: String
+  avatar: String
+  currentCost: String!
+  estimatedCost: String!
+  registrationStatus: String!
+  status: String!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  user: User!
+  projects: [RailwayProject!]
+  _count: RailwayProfileCount!
+}
+
+type RailwayProjectCountAggregate {
+  id: Int!
+  userId: Int!
+  railwayProfileId: Int!
+  railwayProjectId: Int!
+  name: Int!
+  description: Int!
+  projectCreatedAt: Int!
+  projectUpdatedAt: Int!
+  prDeploys: Int!
+  prForks: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  _all: Int!
+}
+
+type RailwayProjectMinAggregate {
+  id: String
+  userId: String
+  railwayProfileId: String
+  railwayProjectId: String
+  name: String
+  description: String
+  projectCreatedAt: DateTime
+  projectUpdatedAt: DateTime
+  prDeploys: Boolean
+  prForks: Boolean
+  createdAt: DateTime
+  updatedAt: DateTime
+}
+
+type RailwayProjectMaxAggregate {
+  id: String
+  userId: String
+  railwayProfileId: String
+  railwayProjectId: String
+  name: String
+  description: String
+  projectCreatedAt: DateTime
+  projectUpdatedAt: DateTime
+  prDeploys: Boolean
+  prForks: Boolean
+  createdAt: DateTime
+  updatedAt: DateTime
+}
+
+type RailwayTokenCountAggregate {
+  id: Int!
+  userId: Int!
+  name: Int!
+  value: Int!
+  createdAt: Int!
+  updatedAt: Int!
+  _all: Int!
+}
+
+type RailwayTokenMinAggregate {
+  id: String
+  userId: String
+  name: String
+  value: String
+  createdAt: DateTime
+  updatedAt: DateTime
+}
+
+type RailwayTokenMaxAggregate {
+  id: String
+  userId: String
+  name: String
+  value: String
+  createdAt: DateTime
+  updatedAt: DateTime
+}
+
 type UserCountAggregate {
   id: Int!
   fullName: Int!
@@ -11,6 +224,8 @@ type UserCountAggregate {
   providerId: Int!
   provider: Int!
   avatarUrl: Int!
+  activeRailwayToken: Int!
+  railwayAccountStatus: Int!
   status: Int!
   createdAt: Int!
   updatedAt: Int!
@@ -22,60 +237,43 @@ type UserMinAggregate {
   fullName: String
   email: String
   providerId: String
-  provider: UserProvider
+  provider: UserAuthProvider
   avatarUrl: String
+  activeRailwayToken: String
+  railwayAccountStatus: String
   status: UserStatus
   createdAt: DateTime
   updatedAt: DateTime
 }
-
-enum UserProvider {
-  GITHUB
-  GOOGLE
-}
-
-enum UserStatus {
-  suspended
-  deleted
-  active
-}
-
-"""
-A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
-"""
-scalar DateTime
 
 type UserMaxAggregate {
   id: String
   fullName: String
   email: String
   providerId: String
-  provider: UserProvider
+  provider: UserAuthProvider
   avatarUrl: String
+  activeRailwayToken: String
+  railwayAccountStatus: String
   status: UserStatus
   createdAt: DateTime
   updatedAt: DateTime
 }
 
-type User {
-  id: ID!
-  fullName: String
-  email: String
-  providerId: String!
-  provider: UserProvider!
-  avatarUrl: String
-  status: UserStatus!
-  createdAt: DateTime!
-  updatedAt: DateTime!
-}
-
 type Query {
+  getRailwayTokens: [RailwayToken!]!
   me: User!
 }
 
 type Mutation {
-  connectRailwayAccount(token: String!): User!
+  connectRailwayAccount(payload: ConnectRailwayAccountDTO!): User!
+  removeRailwayToken(id: String!): String!
   authorize(payload: AuthenticateDTO!): User!
+}
+
+input ConnectRailwayAccountDTO {
+  name: String
+  token: String!
 }
 
 input AuthenticateDTO {
@@ -87,6 +285,6 @@ input AuthenticateDTO {
 }
 
 enum AuthProvider {
-  GOOGLE
-  GITHUB
+  google
+  github
 }

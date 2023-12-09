@@ -9,7 +9,7 @@ import {
 import { PrismaService } from 'src/prisma/prisma.service';
 import { User } from 'src/models';
 import { AuthenticateDTO } from './dto/auth.input';
-import { AuthProvider, AuthUser } from 'src/@types/auth';
+import { AuthUser } from 'src/@types/auth';
 
 @Injectable()
 export class AuthService {
@@ -48,7 +48,7 @@ export class AuthService {
       return await this.prismaService.user.findFirstOrThrow({
         where: {
           providerId: payload.user_id,
-          provider: payload.provider.toUpperCase() as AuthProvider,
+          provider: payload.provider,
         },
       });
     } catch (error) {
@@ -90,14 +90,14 @@ export class AuthService {
       let user = await this.prismaService.user.findFirst({
         where: {
           OR: [
-            { providerId, provider },
+            { providerId, provider: provider },
             { email, provider },
           ],
         },
       });
 
+      // Create new user account
       if (!user) {
-        // Create new user account
         user = await this.prismaService.user.create({ data: payload });
       }
 

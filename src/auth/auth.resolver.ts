@@ -22,7 +22,6 @@ export class AuthResolver {
     @Args('payload')
     payload: AuthenticateDTO,
   ): Promise<User> {
-    const response = await this.authService.authorizeUser(payload);
-    return response;
+    return await this.authService.authorizeUser(payload);
   }
 }

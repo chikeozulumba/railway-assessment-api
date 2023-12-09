@@ -21,6 +21,7 @@ export class AuthGuard extends PassportAuthGuard('jwt') {
     try {
       const request = this.getRequest(context);
       const token = request.headers['x-auth-token'];
+
       if (!token) {
         return false;
       }

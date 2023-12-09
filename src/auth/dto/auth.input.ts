@@ -1,4 +1,5 @@
 import { Field, InputType, registerEnumType } from '@nestjs/graphql';
+import { Transform } from 'class-transformer';
 import { IsEmail, IsEnum, IsOptional, MaxLength } from 'class-validator';
 import { AuthProvider } from 'src/@types/auth';
 
@@ -10,6 +11,7 @@ registerEnumType(AuthProvider, {
 export class AuthenticateDTO {
   @IsEnum(AuthProvider)
   @Field({ defaultValue: null })
+  @Transform(({ value }) => String(value).toLowerCase())
   provider: AuthProvider;
 
   @Field()
