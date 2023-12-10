@@ -25,7 +25,7 @@ export class PrismaService
       ],
     });
 
-    if (['local', 'development'].includes(this.configService.get('NODE_ENV'))) {
+    if (['test'].includes(this.configService.get('NODE_ENV'))) {
       this.$on('error', ({ message }) => {
         this.logger.error(message);
       });

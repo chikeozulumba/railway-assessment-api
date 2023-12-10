@@ -6,16 +6,22 @@ import {
 } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 import { ApolloError } from '@apollo/client/core';
-import { AuthUser } from 'src/@types/auth';
+import { Queue } from 'bull';
+import { InjectQueue } from '@nestjs/bull';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { RailwayClientService } from './../railway-client/railway-client.service';
 import { GQL_USER_PROJECTS_AND_PROFILE_QUERY } from './gql';
+import { RemoveRailwayToken } from './models/token.model';
+import { RailwayToken, User } from 'src/models';
+import type { AuthUser } from 'src/@types/auth';
 
 @Injectable()
 export class UserService {
   private logger = new Logger(UserService.name);
 
   constructor(
+    @InjectQueue('QUEUE_USER')
+    private readonly userQueue: Queue,
     private readonly prismaService: PrismaService,
     private readonly railwayClientService: RailwayClientService,
   ) {}
@@ -30,19 +36,19 @@ export class UserService {
   async removeRailwayToken(
     id: string,
     { user_id: providerId, provider }: AuthUser,
-  ) {
+  ): Promise<RemoveRailwayToken> {
     const user = await this.prismaService.user.findFirstOrThrow({
       where: { provider, providerId },
     });
 
-    await this.prismaService.railwayToken.delete({
+    await this.prismaService.token.delete({
       where: {
         userId: user.id,
         id,
       },
     });
 
-    return 'success';
+    return { status: 'success' };
   }
 
   /**
@@ -51,7 +57,10 @@ export class UserService {
    * @param {User} user
    * @return {RailwayToken[]}
    */
-  async getRailwayTokens({ user_id: providerId, provider }: AuthUser) {
+  async getRailwayTokens({
+    user_id: providerId,
+    provider,
+  }: AuthUser): Promise<RailwayToken[]> {
     const user = await this.prismaService.user.findFirstOrThrow({
       where: { provider, providerId },
       include: { tokens: true },
@@ -77,11 +86,11 @@ export class UserService {
     token: string,
     tokenName: string,
     { user_id: providerId, provider }: AuthUser,
-  ) {
+  ): Promise<User> {
     try {
       return await this.prismaService.$transaction(
         async (prisma: PrismaClient) => {
-          const checkIfTokenExists = await prisma.railwayToken.count({
+          const checkIfTokenExists = await prisma.token.count({
             where: {
               value: token,
             },
@@ -115,8 +124,8 @@ export class UserService {
             });
 
           const profile = getUserRailwayProfileAndProjects.data.me;
-          // const railwayProjects =
-          //   getUserRailwayProfileAndProjects.data.projects;
+          const railwayProjects =
+            getUserRailwayProfileAndProjects.data.projects;
 
           if (profile.registrationStatus !== 'REGISTERED') {
             throw new UnauthorizedException(
@@ -137,18 +146,18 @@ export class UserService {
             status: 'active',
           };
 
-          await prisma.railwayProfile.updateMany({
+          await prisma.profile.updateMany({
             where: { userId: user.id, AND: { NOT: { railwayId: profile.id } } },
             data: { status: 'inactive' },
           });
 
-          await prisma.railwayProfile.upsert({
+          await prisma.profile.upsert({
             where: { railwayId: profile.id, userId: user.id },
             create: updateProfilePayload,
             update: updateProfilePayload,
           });
 
-          const createdToken = await prisma.railwayToken.create({
+          const createdToken = await prisma.token.create({
             data: { userId: user.id, value: token, name: tokenName },
           });
 
@@ -163,6 +172,17 @@ export class UserService {
               },
             });
           }
+
+          await this.userQueue.add('LOAD_GITHUB_REPOSITORIES', {
+            token,
+            user,
+          });
+
+          await this.userQueue.add('LOAD_PROJECTS_AND_SERVICES', {
+            user,
+            railwayId: profile.id,
+            projects: railwayProjects.edges,
+          });
 
           return user;
         },

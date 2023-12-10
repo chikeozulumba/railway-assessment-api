@@ -6,6 +6,7 @@ import { AuthGuard } from 'src/common/guards/auth.guard';
 import { RailwayToken, User } from 'src/models';
 import { AuthUser } from 'src/@types/auth';
 import { ConnectRailwayAccountDTO } from './dto/user.input';
+import { RemoveRailwayToken } from './models/token.model';
 
 @UseGuards(AuthGuard)
 @Resolver(() => User)
@@ -20,7 +21,7 @@ export class UserResolver {
     return await this.userService.connectRailwayAccount(token, name, user);
   }
 
-  @Mutation(() => String)
+  @Mutation(() => RemoveRailwayToken)
   async removeRailwayToken(@Args('id') id: string, @GetUser() user: AuthUser) {
     return await this.userService.removeRailwayToken(id, user);
   }

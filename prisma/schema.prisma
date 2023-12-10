@@ -16,47 +16,91 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model RailwayProfile {
-  id                 String           @id @default(auto()) @map("_id") @db.ObjectId
-  userId             String           @map("user_id") @db.ObjectId
-  user               User             @relation(fields: [userId], references: [id])
-  railwayId          String           @map("railway_id")
-  email              String?          @map("email")
-  name               String?          @map("name")
-  username           String?          @map("username")
-  avatar             String?          @map("avatar")
-  currentCost        String           @map("current_cost")
-  estimatedCost      String           @map("estimated_cost")
-  registrationStatus String           @map("registration_status") // ONBOARDED, REGISTERED, WAITLISTED
-  // tokenAssigned      String           @map("token_assigned")
-  status             String           @default("active") @map("status") // ACTIVE,INACTIVE
+model Profile {
+  id                 String  @id @default(auto()) @map("_id") @db.ObjectId
+  userId             String  @map("user_id") @db.ObjectId
+  user               User    @relation(fields: [userId], references: [id])
+  railwayId          String  @map("railway_id")
+  email              String? @map("email")
+  name               String? @map("name")
+  username           String? @map("username")
+  avatar             String? @map("avatar")
+  currentCost        String  @map("current_cost")
+  estimatedCost      String  @map("estimated_cost")
+  registrationStatus String  @map("registration_status") // ONBOARDED, REGISTERED, WAITLISTED
+  status             String  @default("active") @map("status") // ACTIVE,INACTIVE
 
-  createdAt          DateTime         @default(now()) @map("created_at")
-  updatedAt          DateTime         @default(now()) @updatedAt @map("updated_at")
-  projects           RailwayProject[]
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  projects Project[]
 
   @@unique([railwayId])
-  @@map("railway_profile")
+  @@map("profile")
 }
 
-model RailwayProject {
-  id               String         @id @default(auto()) @map("_id") @db.ObjectId
-  userId           String         @map("user_id") @db.ObjectId
-  user             User           @relation(fields: [userId], references: [id])
-  railwayProfileId String         @map("railway_profile_id") @db.ObjectId
-  railwayProfile   RailwayProfile @relation(fields: [railwayProfileId], references: [id])
-  railwayProjectId String         @map("railway_project_id")
+model Project {
+  id               String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId           String    @map("user_id") @db.ObjectId
+  user             User      @relation(fields: [userId], references: [id])
+  profileId        String    @map("profile_id") @db.ObjectId
+  profile          Profile   @relation(fields: [profileId], references: [id])
+  railwayProjectId String    @unique @map("railway_project_id")
   name             String?
   description      String?
-  projectCreatedAt DateTime?      @map("project_cpdated_at")
-  projectUpdatedAt DateTime?      @map("project_updated_at")
-  prDeploys        Boolean?       @map("pr_deploys")
-  prForks          Boolean?       @map("pr_forks")
+  projectCreatedAt DateTime? @map("project_cpdated_at")
+  projectUpdatedAt DateTime? @map("project_updated_at")
+  prDeploys        Boolean?  @map("pr_deploys")
+  prForks          Boolean?  @map("pr_forks")
 
-  createdAt        DateTime       @default(now()) @map("created_at")
-  updatedAt        DateTime       @default(now()) @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
 
-  @@map("railway_projects")
+  Service Service[]
+
+  @@map("projects")
+}
+
+model Service {
+  id               String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId           String    @map("user_id") @db.ObjectId
+  user             User      @relation(fields: [userId], references: [id])
+  projectId        String    @map("project_id") @db.ObjectId
+  project          Project   @relation(fields: [projectId], references: [id])
+  railwayServiceId String    @unique @map("railway_service_id")
+  name             String?
+  serviceCreatedAt DateTime? @map("service_cpdated_at")
+  serviceUpdatedAt DateTime? @map("service_updated_at")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  instances ServiceInstance[]
+
+  @@map("services")
+}
+
+model ServiceInstance {
+  id                       String  @id @default(auto()) @map("_id") @db.ObjectId
+  userId                   String  @map("user_id") @db.ObjectId
+  user                     User    @relation(fields: [userId], references: [id])
+  serviceId                String  @map("service_id") @db.ObjectId
+  service                  Service @relation(fields: [serviceId], references: [id])
+  railwayServiceInstanceId String  @unique @map("railway_service_instance_id")
+  builder                  String? @map("builder")
+  buildCommand             String? @map("build_command")
+  sourceImage              String? @map("source_image")
+  sourceRepo               String? @map("source_repo")
+  sourceTemplateName       String? @map("source_template_name")
+  sourceTemplateSource     String? @map("source_template_source")
+  startCommand             String? @map("start_command")
+  numReplicas              String? @map("num_replicas")
+  domains                  Json?
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@map("service_instances")
 }
 
 enum UserStatus {
@@ -65,17 +109,18 @@ enum UserStatus {
   active
 }
 
-model RailwayToken {
-  id     String  @id @default(auto()) @map("_id") @db.ObjectId
-  userId String  @map("user_id") @db.ObjectId
-  user   User    @relation(fields: [userId], references: [id])
-  name   String? @map("name")
-  value  String  @map("value") @unique
+model Token {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String   @map("user_id") @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id])
+  name      String?
+  value     String   @unique
+  isDefault Boolean? @default(false)
 
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
 
-  @@map("railway_tokens")
+  @@map("tokens")
 }
 
 model User {
@@ -89,15 +134,35 @@ model User {
   railwayAccountStatus String?           @map("railway_account_status")
   status               UserStatus        @default(active)
 
-  createdAt            DateTime          @default(now()) @map("created_at")
-  updatedAt            DateTime          @default(now()) @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
 
-  profile  RailwayProfile[]
-  projects RailwayProject[]
-  tokens   RailwayToken[]
+  profile          Profile[]
+  projects         Project[]
+  tokens           Token[]
+  services         Service[]
+  serviceInstances ServiceInstance[]
+  repositories     UserRepository[]
 
   @@unique([provider, providerId])
   @@map("users")
+}
+
+model UserRepository {
+  id             String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId         String   @map("user_id") @db.ObjectId
+  user           User     @relation(fields: [userId], references: [id])
+  repoId         Int      @map("repo_id")
+  name           String?
+  fullName       String?  @unique @map("full_name")
+  defaultBranch  String?  @map("default_branch")
+  installationId String?  @map("installation_id")
+  isPrivate      Boolean? @default(false) @map("is_private")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
+
+  @@map("user_repositories")
 }
 
 enum UserAuthProvider {

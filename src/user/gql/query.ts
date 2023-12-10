@@ -1,5 +1,18 @@
 import { gql } from '@apollo/client/core';
 
+export const GQL_USER_GITHUB_REPOSITORIES_QUERY = gql`
+  query GithubRepositories {
+    githubRepos {
+      defaultBranch
+      fullName
+      id
+      installationId
+      isPrivate
+      name
+    }
+  }
+`;
+
 export const GQL_USER_PROJECTS_AND_PROFILE_QUERY = gql`
   query ProfileAndProjects {
     me {
@@ -35,11 +48,25 @@ export const GQL_USER_PROJECTS_AND_PROFILE_QUERY = gql`
                 serviceInstances {
                   edges {
                     node {
+                      domains {
+                        serviceDomains {
+                          domain
+                        }
+
+                        customDomains {
+                          domain
+                        }
+                      }
+                      builder
                       buildCommand
                       id
                       source {
                         image
                         repo
+                        template {
+                          serviceName
+                          serviceSource
+                        }
                       }
                       startCommand
                       serviceId

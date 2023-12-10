@@ -8,11 +8,13 @@ import { PrismaModule } from './prisma/prisma.module';
 import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
 import { RailwayClientModule } from './railway-client/railway-client.module';
+import { QueueModule } from './queue/queue.module';
 
 @Module({
   imports: [
     ConfigModule,
     PrismaModule,
+    QueueModule,
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
       playground: true,
