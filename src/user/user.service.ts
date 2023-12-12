@@ -1,6 +1,6 @@
 import {
+  BadRequestException,
   Injectable,
-  Logger,
   UnauthorizedException,
   UnprocessableEntityException,
 } from '@nestjs/common';
@@ -10,15 +10,16 @@ import { Queue } from 'bull';
 import { InjectQueue } from '@nestjs/bull';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { RailwayClientService } from './../railway-client/railway-client.service';
-import { GQL_USER_PROJECTS_AND_PROFILE_QUERY } from './gql';
+import {
+  GQL_USER_GITHUB_REPOSITORY_WITH_BRANCHES_QUERY,
+  GQL_USER_PROJECTS_AND_PROFILE_QUERY,
+} from './gql';
 import { RemoveRailwayToken } from './models/token.model';
-import { RailwayToken, User } from 'src/models';
+import type { Project, Token, User, UserRepository } from 'src/models';
 import type { AuthUser } from 'src/@types/auth';
 
 @Injectable()
 export class UserService {
-  private logger = new Logger(UserService.name);
-
   constructor(
     @InjectQueue('QUEUE_USER')
     private readonly userQueue: Queue,
@@ -55,12 +56,12 @@ export class UserService {
    * Method for retrieving railway tokens
    *
    * @param {User} user
-   * @return {RailwayToken[]}
+   * @return {Token[]}
    */
   async getRailwayTokens({
     user_id: providerId,
     provider,
-  }: AuthUser): Promise<RailwayToken[]> {
+  }: AuthUser): Promise<Token[]> {
     const user = await this.prismaService.user.findFirstOrThrow({
       where: { provider, providerId },
       include: { tokens: true },
@@ -71,6 +72,105 @@ export class UserService {
       value:
         'xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxx-' +
         t.value.split('-').pop().substring(8, 12),
+    }));
+  }
+
+  /**
+   * Method for retrieving railway projects
+   *
+   * @param {User} user
+   * @return {Project[]}
+   */
+  async railwayProjects({
+    user_id: providerId,
+    provider,
+  }: AuthUser): Promise<Project[]> {
+    const user = await this.prismaService.user.findFirstOrThrow({
+      where: { provider, providerId },
+      include: {
+        projects: { include: { services: { include: { instances: true } } } },
+      },
+    });
+
+    return user.projects;
+  }
+
+  /**
+   * Method for retrieving user repositories
+   *
+   * @param {User} user
+   * @return {any}
+   */
+  async fetchUserGithubRepositoryBranches(
+    { provider, user_id: providerId }: AuthUser,
+    { repoId, tokenId }: { [key: string]: string },
+  ): Promise<any> {
+    const user = await this.prismaService.user.findFirstOrThrow({
+      where: { provider, providerId },
+      include: {
+        repositories: true,
+        tokens: true,
+      },
+    });
+
+    const tokenIdToBeUsed = tokenId || user.activeRailwayToken;
+
+    let repository = user.repositories.find((repo) => repo.id === repoId);
+    const token = user.tokens.find((token) => token.id === tokenIdToBeUsed);
+
+    if (!repository) {
+      throw new BadRequestException(`Repository not found.`);
+    }
+
+    if (!token) {
+      throw new BadRequestException(`Invalid Railway token selected.`);
+    }
+
+    if (!repository.branchesLoaded) {
+      const [owner, repo] = repository.fullName.split('/');
+      const { data } = await this.railwayClientService.client.query({
+        query: GQL_USER_GITHUB_REPOSITORY_WITH_BRANCHES_QUERY,
+        variables: { owner, repo },
+        context: {
+          headers: {
+            Authorization: 'Bearer ' + token.value,
+          },
+        },
+      });
+
+      repository = await this.prismaService.userRepository.update({
+        where: { id: repository.id },
+        data: {
+          branches: data.githubRepoBranches.map(({ name }) => name),
+          branchesLoaded: true,
+        },
+      });
+    }
+
+    return repository.branches;
+  }
+
+  /**
+   * Method for retrieving user repository branches
+   *
+   * @param {User} user
+   * @return {Partial<UserRepository>[]}
+   */
+  async fetchUserGithubRepositories({
+    user_id: providerId,
+    provider,
+  }: AuthUser): Promise<Partial<UserRepository>[]> {
+    const user = await this.prismaService.user.findFirstOrThrow({
+      where: { provider, providerId },
+      include: {
+        repositories: true,
+      },
+    });
+
+    return user.repositories.map((repo) => ({
+      id: repo.id,
+      fullName: repo.fullName,
+      defaultBranch: repo.defaultBranch,
     }));
   }
 

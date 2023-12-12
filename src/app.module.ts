@@ -9,6 +9,7 @@ import { UserModule } from './user/user.module';
 import { AuthModule } from './auth/auth.module';
 import { RailwayClientModule } from './railway-client/railway-client.module';
 import { QueueModule } from './queue/queue.module';
+import { ProjectModule } from './project/project.module';
 
 @Module({
   imports: [
@@ -54,6 +55,7 @@ import { QueueModule } from './queue/queue.module';
     UserModule,
     AuthModule,
     RailwayClientModule,
+    ProjectModule,
   ],
 })
 export class AppModule {}

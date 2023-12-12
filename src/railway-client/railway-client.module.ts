@@ -5,5 +5,6 @@ import { RailwayClientService } from './railway-client.service';
 @Module({
   imports: [ConfigModule],
   providers: [RailwayClientService],
+  exports: [RailwayClientService],
 })
 export class RailwayClientModule {}

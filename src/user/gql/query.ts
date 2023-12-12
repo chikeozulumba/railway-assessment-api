@@ -13,6 +13,14 @@ export const GQL_USER_GITHUB_REPOSITORIES_QUERY = gql`
   }
 `;
 
+export const GQL_USER_GITHUB_REPOSITORY_WITH_BRANCHES_QUERY = gql`
+  query GithubRepositories($owner: String!, $repo: String!) {
+    githubRepoBranches(owner: $owner, repo: $repo) {
+      name
+    }
+  }
+`;
+
 export const GQL_USER_PROJECTS_AND_PROFILE_QUERY = gql`
   query ProfileAndProjects {
     me {

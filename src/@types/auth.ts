@@ -1,4 +1,4 @@
-import { UserProvider } from 'src/models';
+import { UserAuthProvider } from 'src/models';
 
 export enum AuthProvider {
   google = 'google',
@@ -17,9 +17,8 @@ export type AuthUser = {
   exp: number;
   firebase: {
     identities: Record<string, any>;
-    // identities: { 'github.com': [Array] };
     sign_in_provider: string;
   };
   uid: string;
-  provider: UserProvider;
+  provider: UserAuthProvider;
 };

@@ -108,7 +108,7 @@ type Service {
 }
 
 type ProjectCount {
-  Service: Int!
+  services: Int!
 }
 
 type Project {
@@ -126,7 +126,7 @@ type Project {
   updatedAt: DateTime!
   user: User!
   profile: Profile!
-  Service: [Service!]
+  services: [Service!]
   _count: ProjectCount!
 }
 
@@ -150,6 +150,8 @@ type UserRepository {
   defaultBranch: String
   installationId: String
   isPrivate: Boolean
+  branchesLoaded: Boolean
+  branches: JSON
   createdAt: DateTime!
   updatedAt: DateTime!
   user: User!
@@ -259,179 +261,6 @@ type ProjectMaxAggregate {
   prForks: Boolean
   createdAt: DateTime
   updatedAt: DateTime
-}
-
-type RailwayProfileCountAggregate {
-  id: Int!
-  userId: Int!
-  railwayId: Int!
-  email: Int!
-  name: Int!
-  username: Int!
-  avatar: Int!
-  currentCost: Int!
-  estimatedCost: Int!
-  registrationStatus: Int!
-  status: Int!
-  createdAt: Int!
-  updatedAt: Int!
-  _all: Int!
-}
-
-type RailwayProfileMinAggregate {
-  id: String
-  userId: String
-  railwayId: String
-  email: String
-  name: String
-  username: String
-  avatar: String
-  currentCost: String
-  estimatedCost: String
-  registrationStatus: String
-  status: String
-  createdAt: DateTime
-  updatedAt: DateTime
-}
-
-type RailwayProfileMaxAggregate {
-  id: String
-  userId: String
-  railwayId: String
-  email: String
-  name: String
-  username: String
-  avatar: String
-  currentCost: String
-  estimatedCost: String
-  registrationStatus: String
-  status: String
-  createdAt: DateTime
-  updatedAt: DateTime
-}
-
-type RailwayProfileCount {
-  projects: Int!
-}
-
-type RailwayProject {
-  id: ID!
-  userId: String!
-  railwayProfileId: String!
-  railwayProjectId: String!
-  name: String
-  description: String
-  projectCreatedAt: DateTime
-  projectUpdatedAt: DateTime
-  prDeploys: Boolean
-  prForks: Boolean
-  createdAt: DateTime!
-  updatedAt: DateTime!
-  user: User!
-  railwayProfile: RailwayProfile!
-}
-
-type RailwayProfile {
-  id: ID!
-  userId: String!
-  railwayId: String!
-  email: String
-  name: String
-  username: String
-  avatar: String
-  currentCost: String!
-  estimatedCost: String!
-  registrationStatus: String!
-  status: String!
-  createdAt: DateTime!
-  updatedAt: DateTime!
-  user: User!
-  projects: [RailwayProject!]
-  _count: RailwayProfileCount!
-}
-
-type RailwayProjectCountAggregate {
-  id: Int!
-  userId: Int!
-  railwayProfileId: Int!
-  railwayProjectId: Int!
-  name: Int!
-  description: Int!
-  projectCreatedAt: Int!
-  projectUpdatedAt: Int!
-  prDeploys: Int!
-  prForks: Int!
-  createdAt: Int!
-  updatedAt: Int!
-  _all: Int!
-}
-
-type RailwayProjectMinAggregate {
-  id: String
-  userId: String
-  railwayProfileId: String
-  railwayProjectId: String
-  name: String
-  description: String
-  projectCreatedAt: DateTime
-  projectUpdatedAt: DateTime
-  prDeploys: Boolean
-  prForks: Boolean
-  createdAt: DateTime
-  updatedAt: DateTime
-}
-
-type RailwayProjectMaxAggregate {
-  id: String
-  userId: String
-  railwayProfileId: String
-  railwayProjectId: String
-  name: String
-  description: String
-  projectCreatedAt: DateTime
-  projectUpdatedAt: DateTime
-  prDeploys: Boolean
-  prForks: Boolean
-  createdAt: DateTime
-  updatedAt: DateTime
-}
-
-type RailwayTokenCountAggregate {
-  id: Int!
-  userId: Int!
-  name: Int!
-  value: Int!
-  createdAt: Int!
-  updatedAt: Int!
-  _all: Int!
-}
-
-type RailwayTokenMinAggregate {
-  id: String
-  userId: String
-  name: String
-  value: String
-  createdAt: DateTime
-  updatedAt: DateTime
-}
-
-type RailwayTokenMaxAggregate {
-  id: String
-  userId: String
-  name: String
-  value: String
-  createdAt: DateTime
-  updatedAt: DateTime
-}
-
-type RailwayToken {
-  id: ID!
-  userId: String!
-  name: String
-  value: String!
-  createdAt: DateTime!
-  updatedAt: DateTime!
-  user: User!
 }
 
 type ServiceCountAggregate {
@@ -607,6 +436,8 @@ type UserRepositoryCountAggregate {
   defaultBranch: Int!
   installationId: Int!
   isPrivate: Int!
+  branchesLoaded: Int!
+  branches: Int!
   createdAt: Int!
   updatedAt: Int!
   _all: Int!
@@ -629,6 +460,7 @@ type UserRepositoryMinAggregate {
   defaultBranch: String
   installationId: String
   isPrivate: Boolean
+  branchesLoaded: Boolean
   createdAt: DateTime
   updatedAt: DateTime
 }
@@ -642,6 +474,7 @@ type UserRepositoryMaxAggregate {
   defaultBranch: String
   installationId: String
   isPrivate: Boolean
+  branchesLoaded: Boolean
   createdAt: DateTime
   updatedAt: DateTime
 }
@@ -651,7 +484,10 @@ type RemoveRailwayToken {
 }
 
 type Query {
-  getRailwayTokens: [RailwayToken!]!
+  getRailwayTokens: [Token!]!
+  railwayProjects: [Project!]!
+  fetchUserGithubRepositories: [UserRepository!]!
+  fetchUserGithubRepositoryBranches(repoId: String!, tokenId: String): [String!]!
   me: User!
 }
 
@@ -659,6 +495,7 @@ type Mutation {
   connectRailwayAccount(payload: ConnectRailwayAccountDTO!): User!
   removeRailwayToken(id: String!): RemoveRailwayToken!
   authorize(payload: AuthenticateDTO!): User!
+  createNewRailwayProject(payload: CreateNewRailwayProjectDTO!): Project!
 }
 
 input ConnectRailwayAccountDTO {
@@ -677,4 +514,19 @@ input AuthenticateDTO {
 enum AuthProvider {
   google
   github
+}
+
+input CreateNewRailwayProjectDTO {
+  tokenId: String!
+  name: String!
+  description: String
+  prDeploys: Boolean
+  isPublic: Boolean
+  defaultEnvironmentName: String = "production"
+  repo: Repo
+}
+
+input Repo {
+  fullRepoName: String!
+  branch: String!
 }

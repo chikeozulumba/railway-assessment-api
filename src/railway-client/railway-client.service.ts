@@ -4,8 +4,7 @@ import {
   InMemoryCache,
   NormalizedCacheObject,
 } from '@apollo/client/core';
-
-import { ConfigService } from './../config/config.service';
+import { ConfigService } from 'src/config/config.service';
 
 @Injectable()
 export class RailwayClientService implements OnModuleInit {
