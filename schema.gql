@@ -62,6 +62,48 @@ type ProfileCount {
   projects: Int!
 }
 
+type UserRepository {
+  id: ID!
+  userId: String!
+  repoId: Int!
+  tokenId: String!
+  name: String
+  fullName: String
+  defaultBranch: String
+  installationId: String
+  isPrivate: Boolean
+  branchesLoaded: Boolean
+  branches: JSON
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  user: User!
+  token: Token!
+}
+
+"""
+The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
+"""
+scalar JSON
+
+type TokenCount {
+  repositories: Int!
+  projects: Int!
+}
+
+type Token {
+  id: ID!
+  userId: String!
+  name: String
+  value: String!
+  isDefault: Boolean
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  user: User!
+  repositories: [UserRepository!]
+  projects: [Project!]
+  _count: TokenCount!
+}
+
 type ServiceInstance {
   id: ID!
   userId: String!
@@ -81,11 +123,6 @@ type ServiceInstance {
   user: User!
   service: Service!
 }
-
-"""
-The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
-"""
-scalar JSON
 
 type ServiceCount {
   instances: Int!
@@ -114,7 +151,7 @@ type ProjectCount {
 type Project {
   id: ID!
   userId: String!
-  profileId: String!
+  tokenId: String
   railwayProjectId: String!
   name: String
   description: String
@@ -124,41 +161,13 @@ type Project {
   prForks: Boolean
   createdAt: DateTime!
   updatedAt: DateTime!
+  token: Token
   user: User!
-  profile: Profile!
   services: [Service!]
   _count: ProjectCount!
 }
 
-type Token {
-  id: ID!
-  userId: String!
-  name: String
-  value: String!
-  isDefault: Boolean
-  createdAt: DateTime!
-  updatedAt: DateTime!
-  user: User!
-}
-
-type UserRepository {
-  id: ID!
-  userId: String!
-  repoId: Int!
-  name: String
-  fullName: String
-  defaultBranch: String
-  installationId: String
-  isPrivate: Boolean
-  branchesLoaded: Boolean
-  branches: JSON
-  createdAt: DateTime!
-  updatedAt: DateTime!
-  user: User!
-}
-
 type UserCount {
-  profile: Int!
   projects: Int!
   tokens: Int!
   services: Int!
@@ -168,17 +177,15 @@ type UserCount {
 
 type User {
   id: ID!
+  uid: String!
   fullName: String
   email: String
-  providerId: String!
-  provider: UserAuthProvider
-  avatarUrl: String
   activeRailwayToken: String
+  railwayId: String
+  railwayregistrationStatus: String
   railwayAccountStatus: String
-  status: UserStatus!
   createdAt: DateTime!
   updatedAt: DateTime!
-  profile: [Profile!]
   projects: [Project!]
   tokens: [Token!]
   services: [Service!]
@@ -187,40 +194,10 @@ type User {
   _count: UserCount!
 }
 
-enum UserAuthProvider {
-  google
-  github
-}
-
-enum UserStatus {
-  suspended
-  deleted
-  active
-}
-
-type Profile {
-  id: ID!
-  userId: String!
-  railwayId: String!
-  email: String
-  name: String
-  username: String
-  avatar: String
-  currentCost: String!
-  estimatedCost: String!
-  registrationStatus: String!
-  status: String!
-  createdAt: DateTime!
-  updatedAt: DateTime!
-  user: User!
-  projects: [Project!]
-  _count: ProfileCount!
-}
-
 type ProjectCountAggregate {
   id: Int!
   userId: Int!
-  profileId: Int!
+  tokenId: Int!
   railwayProjectId: Int!
   name: Int!
   description: Int!
@@ -236,7 +213,7 @@ type ProjectCountAggregate {
 type ProjectMinAggregate {
   id: String
   userId: String
-  profileId: String
+  tokenId: String
   railwayProjectId: String
   name: String
   description: String
@@ -251,7 +228,7 @@ type ProjectMinAggregate {
 type ProjectMaxAggregate {
   id: String
   userId: String
-  profileId: String
+  tokenId: String
   railwayProjectId: String
   name: String
   description: String
@@ -386,14 +363,13 @@ type TokenMaxAggregate {
 
 type UserCountAggregate {
   id: Int!
+  uid: Int!
   fullName: Int!
   email: Int!
-  providerId: Int!
-  provider: Int!
-  avatarUrl: Int!
   activeRailwayToken: Int!
+  railwayId: Int!
+  railwayregistrationStatus: Int!
   railwayAccountStatus: Int!
-  status: Int!
   createdAt: Int!
   updatedAt: Int!
   _all: Int!
@@ -401,28 +377,26 @@ type UserCountAggregate {
 
 type UserMinAggregate {
   id: String
+  uid: String
   fullName: String
   email: String
-  providerId: String
-  provider: UserAuthProvider
-  avatarUrl: String
   activeRailwayToken: String
+  railwayId: String
+  railwayregistrationStatus: String
   railwayAccountStatus: String
-  status: UserStatus
   createdAt: DateTime
   updatedAt: DateTime
 }
 
 type UserMaxAggregate {
   id: String
+  uid: String
   fullName: String
   email: String
-  providerId: String
-  provider: UserAuthProvider
-  avatarUrl: String
   activeRailwayToken: String
+  railwayId: String
+  railwayregistrationStatus: String
   railwayAccountStatus: String
-  status: UserStatus
   createdAt: DateTime
   updatedAt: DateTime
 }
@@ -431,6 +405,7 @@ type UserRepositoryCountAggregate {
   id: Int!
   userId: Int!
   repoId: Int!
+  tokenId: Int!
   name: Int!
   fullName: Int!
   defaultBranch: Int!
@@ -455,6 +430,7 @@ type UserRepositoryMinAggregate {
   id: String
   userId: String
   repoId: Int
+  tokenId: String
   name: String
   fullName: String
   defaultBranch: String
@@ -469,6 +445,7 @@ type UserRepositoryMaxAggregate {
   id: String
   userId: String
   repoId: Int
+  tokenId: String
   name: String
   fullName: String
   defaultBranch: String
@@ -494,32 +471,23 @@ type Query {
 type Mutation {
   connectRailwayAccount(payload: ConnectRailwayAccountDTO!): User!
   removeRailwayToken(id: String!): RemoveRailwayToken!
-  authorize(payload: AuthenticateDTO!): User!
+  authorize(payload: AuthorizeDTO!): User!
   createNewRailwayProject(payload: CreateNewRailwayProjectDTO!): Project!
 }
 
 input ConnectRailwayAccountDTO {
   name: String
   token: String!
+  isDefault: Boolean
 }
 
-input AuthenticateDTO {
-  provider: AuthProvider!
-  providerId: String!
-  fullName: String!
-  avatarUrl: String!
-  email: String!
-}
-
-enum AuthProvider {
-  google
-  github
+input AuthorizeDTO {
+  uid: String!
+  fullName: String
 }
 
 input CreateNewRailwayProjectDTO {
-  tokenId: String!
-  name: String!
-  description: String
+  tokenId: String
   prDeploys: Boolean
   isPublic: Boolean
   defaultEnvironmentName: String = "production"

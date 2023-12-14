@@ -1,0 +1,11 @@
+{
+    "files.watcherExclude": {
+        "src/models/**": true,
+    },
+    "search.exclude": {
+        "src/models/**": true,
+    },
+    "files.exclude": {
+        "src/models/**": true,
+    },
+}

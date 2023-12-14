@@ -1,24 +1,14 @@
-import { UserAuthProvider } from 'src/models';
-
 export enum AuthProvider {
   google = 'google',
   github = 'github',
 }
 
 export type AuthUser = {
-  name: string;
-  picture: string;
-  iss: string;
-  aud: string;
-  auth_time: number;
-  user_id: string;
-  sub: string;
-  iat: number;
+  azp: string;
   exp: number;
-  firebase: {
-    identities: Record<string, any>;
-    sign_in_provider: string;
-  };
-  uid: string;
-  provider: UserAuthProvider;
+  iat: number;
+  iss: string;
+  nbf: number;
+  sid: string;
+  sub: string;
 };

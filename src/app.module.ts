@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { DirectiveLocation, GraphQLDirective } from 'graphql';
 import { Enhancer, GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
+import { LoggerModule } from 'nestjs-pino';
 import { upperDirectiveTransformer } from './common/directives/upper-case.directive';
 import { ConfigModule } from './config/config.module';
 import { PrismaModule } from './prisma/prisma.module';
@@ -10,9 +11,30 @@ import { AuthModule } from './auth/auth.module';
 import { RailwayClientModule } from './railway-client/railway-client.module';
 import { QueueModule } from './queue/queue.module';
 import { ProjectModule } from './project/project.module';
+import { CacheModule } from './cache/cache.module';
 
 @Module({
   imports: [
+    LoggerModule.forRoot({
+      pinoHttp: {
+        customProps: () => ({
+          context: 'HTTP',
+        }),
+        transport: {
+          target: 'pino-pretty',
+          options: {
+            colorize: false,
+            singleLine: true,
+            levelFirst: false,
+            translateTime: "yyyy-mm-dd'T'HH:MM:ss.l'Z'",
+            messageFormat: '{req.headers.x-correlation-id} [{context}] {msg}',
+            ignore: 'pid,hostname,context,req,res.headers',
+            errorLikeObjectKeys: ['err', 'error'],
+          }
+        },
+      },
+    }),
+    CacheModule,
     ConfigModule,
     PrismaModule,
     QueueModule,

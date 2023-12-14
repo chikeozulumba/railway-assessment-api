@@ -1,5 +1,5 @@
 import { InputType } from '@nestjs/graphql';
-import { IsOptional, IsUUID } from 'class-validator';
+import { IsBoolean, IsOptional, IsUUID } from 'class-validator';
 
 @InputType()
 export class ConnectRailwayAccountDTO {
@@ -9,4 +9,7 @@ export class ConnectRailwayAccountDTO {
 
   @IsUUID()
   token: string;
+
+  @IsBoolean()
+  isDefault?: boolean;
 }

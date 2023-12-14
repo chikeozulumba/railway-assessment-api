@@ -10,11 +10,13 @@ import { Queue } from 'bull';
 import { InjectQueue } from '@nestjs/bull';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { RailwayClientService } from './../railway-client/railway-client.service';
+import { CacheService } from 'src/cache/cache.service';
 import {
   GQL_USER_GITHUB_REPOSITORY_WITH_BRANCHES_QUERY,
   GQL_USER_PROJECTS_AND_PROFILE_QUERY,
 } from './gql';
 import { RemoveRailwayToken } from './models/token.model';
+import { ConnectRailwayAccountDTO } from './dto/user.input';
 import type { Project, Token, User, UserRepository } from 'src/models';
 import type { AuthUser } from 'src/@types/auth';
 
@@ -24,8 +26,9 @@ export class UserService {
     @InjectQueue('QUEUE_USER')
     private readonly userQueue: Queue,
     private readonly prismaService: PrismaService,
+    private readonly cacheService: CacheService,
     private readonly railwayClientService: RailwayClientService,
-  ) {}
+  ) { }
 
   /**
    * Method for removing railway token by ID
@@ -36,10 +39,10 @@ export class UserService {
    */
   async removeRailwayToken(
     id: string,
-    { user_id: providerId, provider }: AuthUser,
+    { sub: uid }: AuthUser,
   ): Promise<RemoveRailwayToken> {
     const user = await this.prismaService.user.findFirstOrThrow({
-      where: { provider, providerId },
+      where: { uid },
     });
 
     await this.prismaService.token.delete({
@@ -47,6 +50,10 @@ export class UserService {
         userId: user.id,
         id,
       },
+    });
+
+    await this.userQueue.add('REMOVE_REPO_AND_PROJECTS_AND_SERVICES', {
+      tokenId: id,
     });
 
     return { status: 'success' };
@@ -58,12 +65,9 @@ export class UserService {
    * @param {User} user
    * @return {Token[]}
    */
-  async getRailwayTokens({
-    user_id: providerId,
-    provider,
-  }: AuthUser): Promise<Token[]> {
+  async getRailwayTokens({ sub: uid }: AuthUser): Promise<Token[]> {
     const user = await this.prismaService.user.findFirstOrThrow({
-      where: { provider, providerId },
+      where: { uid },
       include: { tokens: true },
     });
 
@@ -81,12 +85,9 @@ export class UserService {
    * @param {User} user
    * @return {Project[]}
    */
-  async railwayProjects({
-    user_id: providerId,
-    provider,
-  }: AuthUser): Promise<Project[]> {
+  async railwayProjects({ sub: uid }: AuthUser): Promise<Project[]> {
     const user = await this.prismaService.user.findFirstOrThrow({
-      where: { provider, providerId },
+      where: { uid },
       include: {
         projects: { include: { services: { include: { instances: true } } } },
       },
@@ -102,33 +103,40 @@ export class UserService {
    * @return {any}
    */
   async fetchUserGithubRepositoryBranches(
-    { provider, user_id: providerId }: AuthUser,
+    { sub: uid }: AuthUser,
     { repoId, tokenId }: { [key: string]: string },
   ): Promise<any> {
-    const user = await this.prismaService.user.findFirstOrThrow({
-      where: { provider, providerId },
-      include: {
-        repositories: true,
-        tokens: true,
-      },
-    });
+    try {
+      const user = await this.prismaService.user.findFirstOrThrow({
+        where: { uid },
+        include: {
+          repositories: true,
+          tokens: true,
+        },
+      });
 
-    const tokenIdToBeUsed = tokenId || user.activeRailwayToken;
+      const tokenIdToBeUsed = tokenId || user.activeRailwayToken;
 
-    let repository = user.repositories.find((repo) => repo.id === repoId);
-    const token = user.tokens.find((token) => token.id === tokenIdToBeUsed);
+      let repository = user.repositories.find((repo) => repo.id === repoId);
+      const token = user.tokens.find((token) => token.id === tokenIdToBeUsed);
 
-    if (!repository) {
-      throw new BadRequestException(`Repository not found.`);
-    }
+      if (!repository) {
+        throw new BadRequestException(`Repository not found.`);
+      }
 
-    if (!token) {
-      throw new BadRequestException(`Invalid Railway token selected.`);
-    }
+      if (!token) {
+        throw new BadRequestException(`Invalid Railway token selected.`);
+      }
 
-    if (!repository.branchesLoaded) {
+      const key = `GITHUB-BR-${repository.fullName}`.toLowerCase();
+      const data = await this.cacheService.get<string|null>(key);
+
+      if (data) {
+        return JSON.parse(String(data));
+      }
+
       const [owner, repo] = repository.fullName.split('/');
-      const { data } = await this.railwayClientService.client.query({
+      const response = await this.railwayClientService.client.query({
         query: GQL_USER_GITHUB_REPOSITORY_WITH_BRANCHES_QUERY,
         variables: { owner, repo },
         context: {
@@ -138,16 +146,13 @@ export class UserService {
         },
       });
 
-      repository = await this.prismaService.userRepository.update({
-        where: { id: repository.id },
-        data: {
-          branches: data.githubRepoBranches.map(({ name }) => name),
-          branchesLoaded: true,
-        },
-      });
-    }
+      const branches = (response.data.githubRepoBranches || [])?.map((branch) => branch.name)
 
-    return repository.branches;
+      await this.cacheService.set(key, JSON.stringify(branches));
+      return branches;
+    } catch (error) {
+      console.log(error);
+    }
   }
 
   /**
@@ -157,11 +162,10 @@ export class UserService {
    * @return {Partial<UserRepository>[]}
    */
   async fetchUserGithubRepositories({
-    user_id: providerId,
-    provider,
+    sub: uid,
   }: AuthUser): Promise<Partial<UserRepository>[]> {
     const user = await this.prismaService.user.findFirstOrThrow({
-      where: { provider, providerId },
+      where: { uid },
       include: {
         repositories: true,
       },
@@ -177,15 +181,14 @@ export class UserService {
   /**
    * Method for connecting user railway account
    *
-   * @param {string} token
+   * @param {Payload} payload
    * @param {User} user
    *
    * @return {User}
    */
   async connectRailwayAccount(
-    token: string,
-    tokenName: string,
-    { user_id: providerId, provider }: AuthUser,
+    { token, name: tokenName, isDefault }: ConnectRailwayAccountDTO,
+    { sub: uid }: AuthUser,
   ): Promise<User> {
     try {
       return await this.prismaService.$transaction(
@@ -203,7 +206,7 @@ export class UserService {
           }
 
           let user = await prisma.user.findFirst({
-            where: { providerId, provider },
+            where: { uid },
           });
 
           if (!user) {
@@ -233,55 +236,34 @@ export class UserService {
             );
           }
 
-          const updateProfilePayload = {
-            railwayId: profile.id,
-            name: profile.name,
-            email: profile.email,
-            username: profile.username,
-            avatar: profile.avatar,
-            currentCost: String(profile.cost?.current) || '0',
-            estimatedCost: String(profile.cost?.estimated) || '0',
-            registrationStatus: profile.registrationStatus,
-            userId: user.id,
-            status: 'active',
-          };
-
-          await prisma.profile.updateMany({
-            where: { userId: user.id, AND: { NOT: { railwayId: profile.id } } },
-            data: { status: 'inactive' },
-          });
-
-          await prisma.profile.upsert({
-            where: { railwayId: profile.id, userId: user.id },
-            create: updateProfilePayload,
-            update: updateProfilePayload,
-          });
-
-          const createdToken = await prisma.token.create({
-            data: { userId: user.id, value: token, name: tokenName },
-          });
-
-          if (!user.railwayAccountStatus?.split('-').includes('profile')) {
-            user = await prisma.user.update({
-              where: {
-                id: user.id,
-              },
-              data: {
-                railwayAccountStatus: 'profile',
-                activeRailwayToken: createdToken.id,
-              },
-            });
+          if (isDefault) {
+            await prisma.token.updateMany({ data: { isDefault: false }});
           }
 
+          const createdToken = await prisma.token.create({
+            data: { userId: user.id, value: token, name: tokenName, isDefault },
+          });
+
+          user = await prisma.user.update({
+            where: {
+              id: user.id,
+            },
+            data: {
+              railwayAccountStatus: profile.registrationStatus,
+              // activeRailwayToken: createdToken.id,
+            },
+          });
+
           await this.userQueue.add('LOAD_GITHUB_REPOSITORIES', {
-            token,
             user,
+            token: createdToken,
           });
 
           await this.userQueue.add('LOAD_PROJECTS_AND_SERVICES', {
             user,
             railwayId: profile.id,
             projects: railwayProjects.edges,
+            token: createdToken,
           });
 
           return user;

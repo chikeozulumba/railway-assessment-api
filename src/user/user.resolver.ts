@@ -15,10 +15,10 @@ export class UserResolver {
 
   @Mutation(() => User)
   async connectRailwayAccount(
-    @Args('payload') { token, name }: ConnectRailwayAccountDTO,
+    @Args('payload') { token, name, isDefault }: ConnectRailwayAccountDTO,
     @GetUser() user: AuthUser,
   ) {
-    return await this.userService.connectRailwayAccount(token, name, user);
+    return await this.userService.connectRailwayAccount({token, name, isDefault}, user);
   }
 
   @Mutation(() => RemoveRailwayToken)

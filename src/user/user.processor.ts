@@ -8,7 +8,7 @@ import {
 import { Logger, Injectable } from '@nestjs/common';
 import { Job } from 'bull';
 import { GQL_USER_GITHUB_REPOSITORIES_QUERY } from './gql';
-import { User } from 'src/models';
+import { Token, User } from 'src/models';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { RailwayClientService } from 'src/railway-client/railway-client.service';
 
@@ -40,11 +40,22 @@ export class UserProcessor {
     );
   }
 
+  @Process('REMOVE_REPO_AND_PROJECTS_AND_SERVICES')
+  async removeReposProjectsAndServices(
+    job: Job<{
+      tokenId: string;
+    }>,
+  ): Promise<void> {
+    const tokenId = job.data.tokenId;
+    await this.prismaService.userRepository.deleteMany({ where: { tokenId }});
+    await this.prismaService.project.deleteMany({ where: { tokenId } });
+  }
+
   @Process('LOAD_GITHUB_REPOSITORIES')
   async loadGithubRepositories(
     job: Job<{
-      token: string;
       user: User;
+      token: Token;
     }>,
   ): Promise<void> {
     const token = job.data.token;
@@ -54,7 +65,7 @@ export class UserProcessor {
       query: GQL_USER_GITHUB_REPOSITORIES_QUERY,
       context: {
         headers: {
-          Authorization: 'Bearer ' + token,
+          Authorization: 'Bearer ' + token.value,
         },
       },
     });
@@ -68,6 +79,7 @@ export class UserProcessor {
         name: repo.name,
         userId: user.id,
         repoId: repo.id,
+        tokenId: token.id,
       }));
 
       await prisma.userRepository.createMany({
@@ -81,18 +93,16 @@ export class UserProcessor {
     job: Job<{
       railwayId: string;
       user: User;
+      token: Token;
       projects: any[];
     }>,
   ): Promise<void> {
     const projects = job.data.projects;
     const user = job.data.user;
-    const railwayId = job.data.railwayId;
+    const token = job.data.token;
 
     await this.prismaService.$transaction(async (prisma) => {
       // User profile
-      const profile = await prisma.profile.findFirstOrThrow({
-        where: { railwayId: railwayId, userId: user.id },
-      });
 
       // Create or update projects
       for (let i = 0; i < projects.length; i++) {
@@ -102,12 +112,12 @@ export class UserProcessor {
           name: project.node.name,
           railwayProjectId: project.node.id,
           userId: user.id,
-          profileId: profile.id,
           description: project.node.description,
           projectCreatedAt: project.node.createdAt,
           projectUpdatedAt: project.node.updatedAt,
           prDeploys: project.node.prDeploys,
           prForks: project.node.prForks,
+          tokenId: token.id,
         };
 
         const newProject = await prisma.project.upsert({

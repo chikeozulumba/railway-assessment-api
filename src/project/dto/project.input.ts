@@ -14,14 +14,7 @@ class Repo {
 export class CreateNewRailwayProjectDTO {
   @Field()
   @IsOptional()
-  tokenId: string;
-
-  @Field()
-  name: string;
-
-  @Field()
-  @IsOptional()
-  description?: string;
+  tokenId?: string;
 
   @Field()
   @IsOptional()

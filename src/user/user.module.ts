@@ -7,6 +7,7 @@ import { RailwayClientModule } from 'src/railway-client/railway-client.module';
 import { RailwayClientService } from 'src/railway-client/railway-client.service';
 import { ConfigModule } from 'src/config/config.module';
 import { UserProcessor } from './user.processor';
+import { CacheModule } from 'src/cache/cache.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { UserProcessor } from './user.processor';
     }),
     RailwayClientModule,
     ConfigModule,
+    CacheModule,
   ],
   providers: [
     UserResolver,

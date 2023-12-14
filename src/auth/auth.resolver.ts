@@ -3,7 +3,7 @@ import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { User } from 'src/models';
 import { AuthGuard } from 'src/common/guards/auth.guard';
 import { AuthService } from './auth.service';
-import { AuthenticateDTO } from './dto/auth.input';
+import { AuthorizeDTO } from './dto/auth.input';
 import { GetUser } from 'src/common/decorators/user.decorator';
 import { AuthUser } from 'src/@types/auth';
 
@@ -20,7 +20,7 @@ export class AuthResolver {
   @Mutation(() => User)
   async authorize(
     @Args('payload')
-    payload: AuthenticateDTO,
+    payload: AuthorizeDTO,
   ): Promise<User> {
     return await this.authService.authorizeUser(payload);
   }

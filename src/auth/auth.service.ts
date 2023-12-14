@@ -1,6 +1,5 @@
 import {
-  ForbiddenException,
-  HttpStatus,
+  HttpStatus,                                             
   Injectable,
   InternalServerErrorException,
   Logger,
@@ -8,7 +7,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { User } from 'src/models';
-import { AuthenticateDTO } from './dto/auth.input';
+import { AuthorizeDTO } from './dto/auth.input';
 import { AuthUser } from 'src/@types/auth';
 
 @Injectable()
@@ -19,13 +18,12 @@ export class AuthService {
   /**
    * Method for authroizing user account
    *
-   * @param {AuthenticateDTO} credentials
+   * @param {AuthorizeDTO} credentials
    * @return void
    */
-  async authorizeUser(credentials: AuthenticateDTO): Promise<User> {
+  async authorizeUser(credentials: AuthorizeDTO): Promise<User> {
     try {
       const user = await this.findOrCreateUser(credentials);
-      this.verifyUserAccountStatus(user);
 
       return user;
     } catch (error) {
@@ -43,12 +41,11 @@ export class AuthService {
    *
    * @return void
    */
-  async profile(payload: AuthUser): Promise<User> {
+  async profile({ sub: uid }: AuthUser): Promise<User> {
     try {
       return await this.prismaService.user.findFirstOrThrow({
         where: {
-          providerId: payload.user_id,
-          provider: payload.provider,
+          uid,
         },
       });
     } catch (error) {
@@ -60,45 +57,27 @@ export class AuthService {
   }
 
   /**
-   * Method for verifying user account status
-   *
-   * @return void
-   */
-  verifyUserAccountStatus(user: User) {
-    switch (user.status) {
-      case 'suspended':
-        throw new ForbiddenException(
-          'Your account is temporarily suspended from use.',
-        );
-      case 'deleted':
-        throw new ForbiddenException('Account does not exist.');
-      default:
-        break;
-    }
-  }
-
-  /**
    * Method for returning user account profile
    *
-   * @param {AuthenticateDTO} payload
+   * @param {AuthorizeDTO} payload
    * @return {User}
    */
-  async findOrCreateUser(payload: AuthenticateDTO): Promise<User> {
-    const { email, provider, providerId } = payload;
+  async findOrCreateUser(payload: AuthorizeDTO): Promise<User> {
+    const { uid } = payload;
     try {
       // Check if account exists
       let user = await this.prismaService.user.findFirst({
-        where: {
-          OR: [
-            { providerId, provider: provider },
-            { email, provider },
-          ],
-        },
+        where: { uid },
       });
 
       // Create new user account
       if (!user) {
-        user = await this.prismaService.user.create({ data: payload });
+        user = await this.prismaService.user.create({
+          data: {
+            uid,
+            fullName: payload.fullName,
+          },
+        });
       }
 
       return user;

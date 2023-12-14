@@ -32,4 +32,12 @@ export class ConfigService {
       return value === '' ? undefined : value;
     }
   }
+
+  allowedHeaders() {
+    const clientOrigins: string = this.get('CLIENT_ORIGINS');
+    return clientOrigins
+      .split(',')
+      .filter(Boolean)
+      .map((origin) => origin.trim());
+  }
 }
