@@ -7,7 +7,6 @@ import {
 } from '@nestjs/bull';
 import { Logger, Injectable } from '@nestjs/common';
 import { Job } from 'bull';
-import { GQL_USER_GITHUB_REPOSITORIES_QUERY } from './gql';
 import { Token, User } from 'src/models';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { RailwayClientService } from 'src/railway-client/railway-client.service';
@@ -47,45 +46,7 @@ export class UserProcessor {
     }>,
   ): Promise<void> {
     const tokenId = job.data.tokenId;
-    await this.prismaService.userRepository.deleteMany({ where: { tokenId }});
     await this.prismaService.project.deleteMany({ where: { tokenId } });
-  }
-
-  @Process('LOAD_GITHUB_REPOSITORIES')
-  async loadGithubRepositories(
-    job: Job<{
-      user: User;
-      token: Token;
-    }>,
-  ): Promise<void> {
-    const token = job.data.token;
-    const user = job.data.user;
-
-    const { data } = await this.railwayClientService.client.query({
-      query: GQL_USER_GITHUB_REPOSITORIES_QUERY,
-      context: {
-        headers: {
-          Authorization: 'Bearer ' + token.value,
-        },
-      },
-    });
-
-    await this.prismaService.$transaction(async (prisma) => {
-      const repos = data.githubRepos?.map((repo) => ({
-        defaultBranch: repo.defaultBranch,
-        fullName: repo.fullName,
-        installationId: repo.installationId,
-        isPrivate: repo.isPrivate,
-        name: repo.name,
-        userId: user.id,
-        repoId: repo.id,
-        tokenId: token.id,
-      }));
-
-      await prisma.userRepository.createMany({
-        data: repos,
-      });
-    });
   }
 
   @Process('LOAD_PROJECTS_AND_SERVICES')

@@ -5,14 +5,14 @@ import { PrismaService } from 'src/prisma/prisma.service';
 import { RailwayClientService } from 'src/railway-client/railway-client.service';
 import { GQL_CREATE_RAILWAY_PROJECT_MUTATION } from './gql';
 import type { AuthUser } from 'src/@types/auth';
-import { Project } from 'src/models';
 
 @Injectable()
 export class ProjectService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly railwayClientService: RailwayClientService,
-  ) { }
+  ) {}
+
   /**
    * Method for creating new railway projects
    *
@@ -22,31 +22,26 @@ export class ProjectService {
    * @return {any}
    */
   async createNewRailwayProject(
-    { sub: uid }: AuthUser,
+    { userId }: AuthUser,
     { tokenId, ...payload }: CreateNewRailwayProjectDTO,
   ) {
     try {
       const user = await this.prismaService.user.findFirstOrThrow({
-        where: { uid },
+        where: { id: userId },
         include: {
-          tokens: true,
+          defaultRailwayToken: true,
         },
       });
 
-      const defaultActiveToken = user.activeRailwayToken;
-      console.log(defaultActiveToken || tokenId, user.tokens, user);
+      const tokenIdToBeUsed = tokenId || user.defaultRailwayTokenId;
 
-      if (!defaultActiveToken && !tokenId) {
-        throw new BadRequestException(`Invalid Railway token provided.`);
+      if (!tokenIdToBeUsed) {
+        throw new Error('Invalid Railway token selected.');
       }
 
-      const token = user.tokens.find(
-        (token) => token.id === (tokenId || defaultActiveToken),
-      );
-
-      if (!token) {
-        throw new BadRequestException(`Invalid Railway token provided.`);
-      }
+      const token = await this.prismaService.token.findFirstOrThrow({
+        where: { userId, id: tokenIdToBeUsed },
+      });
 
       const { data } = await this.railwayClientService.client.mutate({
         mutation: GQL_CREATE_RAILWAY_PROJECT_MUTATION,
@@ -59,7 +54,6 @@ export class ProjectService {
       });
 
       return await this.prismaService.$transaction(async (prisma) => {
-
         const record = data.projectCreate;
 
         const project = await this.prismaService.project.create({
@@ -74,7 +68,6 @@ export class ProjectService {
             prForks: record.prForks,
           },
         });
-
 
         const projectServices = record.services?.edges;
 
@@ -132,7 +125,6 @@ export class ProjectService {
       });
     } catch (error) {
       if (error instanceof ApolloError) {
-        console.log(JSON.stringify(error));
         throw new BadRequestException(
           'Error encountered while creating project on Railway.',
         );

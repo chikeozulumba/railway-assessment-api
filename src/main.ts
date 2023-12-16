@@ -8,7 +8,6 @@ import { PrismaClientExceptionFilter } from './common/filters/prisma-client-exce
 async function bootstrap() {
   const config = new ConfigService();
   const app = await NestFactory.create(AppModule, { bufferLogs: true });
-  
 
   app.useGlobalInterceptors(new LoggerErrorInterceptor());
   app.useLogger(app.get(Logger));

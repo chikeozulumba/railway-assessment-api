@@ -11,14 +11,17 @@ import type { AuthUser } from 'src/@types/auth';
 @UseGuards(AuthGuard)
 @Resolver(() => User)
 export class UserResolver {
-  constructor(readonly userService: UserService) {}
+  constructor(readonly userService: UserService) { }
 
   @Mutation(() => User)
   async connectRailwayAccount(
     @Args('payload') { token, name, isDefault }: ConnectRailwayAccountDTO,
     @GetUser() user: AuthUser,
   ) {
-    return await this.userService.connectRailwayAccount({token, name, isDefault}, user);
+    return await this.userService.connectRailwayAccount(
+      { token, name, isDefault },
+      user,
+    );
   }
 
   @Mutation(() => RemoveRailwayToken)
@@ -37,18 +40,21 @@ export class UserResolver {
   }
 
   @Query(() => [UserRepository])
-  async fetchUserGithubRepositories(@GetUser() user: AuthUser) {
-    return await this.userService.fetchUserGithubRepositories(user);
+  async fetchUserGithubRepositories(
+      @GetUser() user: AuthUser,
+      @Args({ name: 'tokenId', nullable: true }) tokenId?: string,
+    ) {
+    return await this.userService.fetchUserGithubRepositories(user, tokenId);
   }
 
   @Query(() => [String])
   async fetchUserGithubRepositoryBranches(
     @GetUser() user: AuthUser,
-    @Args('repoId') repoId: string,
+    @Args('repo') repo: string,
     @Args({ name: 'tokenId', nullable: true }) tokenId?: string,
   ) {
     return await this.userService.fetchUserGithubRepositoryBranches(user, {
-      repoId,
+      repo,
       tokenId,
     });
   }

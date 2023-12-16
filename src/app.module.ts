@@ -12,6 +12,7 @@ import { RailwayClientModule } from './railway-client/railway-client.module';
 import { QueueModule } from './queue/queue.module';
 import { ProjectModule } from './project/project.module';
 import { CacheModule } from './cache/cache.module';
+import { ServiceModule } from './service/service.module';
 
 @Module({
   imports: [
@@ -30,7 +31,7 @@ import { CacheModule } from './cache/cache.module';
             messageFormat: '{req.headers.x-correlation-id} [{context}] {msg}',
             ignore: 'pid,hostname,context,req,res.headers',
             errorLikeObjectKeys: ['err', 'error'],
-          }
+          },
         },
       },
     }),
@@ -78,6 +79,7 @@ import { CacheModule } from './cache/cache.module';
     AuthModule,
     RailwayClientModule,
     ProjectModule,
+    ServiceModule,
   ],
 })
 export class AppModule {}

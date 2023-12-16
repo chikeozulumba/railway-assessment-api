@@ -11,4 +11,5 @@ export type AuthUser = {
   nbf: number;
   sid: string;
   sub: string;
+  userId: string;
 };

@@ -62,48 +62,6 @@ type ProfileCount {
   projects: Int!
 }
 
-type UserRepository {
-  id: ID!
-  userId: String!
-  repoId: Int!
-  tokenId: String!
-  name: String
-  fullName: String
-  defaultBranch: String
-  installationId: String
-  isPrivate: Boolean
-  branchesLoaded: Boolean
-  branches: JSON
-  createdAt: DateTime!
-  updatedAt: DateTime!
-  user: User!
-  token: Token!
-}
-
-"""
-The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
-"""
-scalar JSON
-
-type TokenCount {
-  repositories: Int!
-  projects: Int!
-}
-
-type Token {
-  id: ID!
-  userId: String!
-  name: String
-  value: String!
-  isDefault: Boolean
-  createdAt: DateTime!
-  updatedAt: DateTime!
-  user: User!
-  repositories: [UserRepository!]
-  projects: [Project!]
-  _count: TokenCount!
-}
-
 type ServiceInstance {
   id: ID!
   userId: String!
@@ -123,6 +81,11 @@ type ServiceInstance {
   user: User!
   service: Service!
 }
+
+"""
+The `JSON` scalar type represents JSON values as specified by [ECMA-404](http://www.ecma-international.org/publications/files/ECMA-ST/ECMA-404.pdf).
+"""
+scalar JSON
 
 type ServiceCount {
   instances: Int!
@@ -167,12 +130,27 @@ type Project {
   _count: ProjectCount!
 }
 
+type TokenCount {
+  projects: Int!
+}
+
+type Token {
+  id: ID!
+  userId: String
+  name: String
+  value: String!
+  isDefault: Boolean
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  user: User
+  projects: [Project!]
+  _count: TokenCount!
+}
+
 type UserCount {
   projects: Int!
-  tokens: Int!
   services: Int!
   serviceInstances: Int!
-  repositories: Int!
 }
 
 type User {
@@ -180,17 +158,16 @@ type User {
   uid: String!
   fullName: String
   email: String
-  activeRailwayToken: String
+  defaultRailwayTokenId: String
   railwayId: String
   railwayregistrationStatus: String
   railwayAccountStatus: String
   createdAt: DateTime!
   updatedAt: DateTime!
+  defaultRailwayToken: Token
   projects: [Project!]
-  tokens: [Token!]
   services: [Service!]
   serviceInstances: [ServiceInstance!]
-  repositories: [UserRepository!]
   _count: UserCount!
 }
 
@@ -366,7 +343,7 @@ type UserCountAggregate {
   uid: Int!
   fullName: Int!
   email: Int!
-  activeRailwayToken: Int!
+  defaultRailwayTokenId: Int!
   railwayId: Int!
   railwayregistrationStatus: Int!
   railwayAccountStatus: Int!
@@ -380,7 +357,7 @@ type UserMinAggregate {
   uid: String
   fullName: String
   email: String
-  activeRailwayToken: String
+  defaultRailwayTokenId: String
   railwayId: String
   railwayregistrationStatus: String
   railwayAccountStatus: String
@@ -393,7 +370,7 @@ type UserMaxAggregate {
   uid: String
   fullName: String
   email: String
-  activeRailwayToken: String
+  defaultRailwayTokenId: String
   railwayId: String
   railwayregistrationStatus: String
   railwayAccountStatus: String
@@ -456,6 +433,24 @@ type UserRepositoryMaxAggregate {
   updatedAt: DateTime
 }
 
+type UserRepository {
+  id: ID!
+  userId: String!
+  repoId: Int!
+  tokenId: String!
+  name: String
+  fullName: String
+  defaultBranch: String
+  installationId: String
+  isPrivate: Boolean
+  branchesLoaded: Boolean
+  branches: JSON
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  user: User!
+  token: Token!
+}
+
 type RemoveRailwayToken {
   status: String!
 }
@@ -463,8 +458,8 @@ type RemoveRailwayToken {
 type Query {
   getRailwayTokens: [Token!]!
   railwayProjects: [Project!]!
-  fetchUserGithubRepositories: [UserRepository!]!
-  fetchUserGithubRepositoryBranches(repoId: String!, tokenId: String): [String!]!
+  fetchUserGithubRepositories(tokenId: String): [UserRepository!]!
+  fetchUserGithubRepositoryBranches(repo: String!, tokenId: String): [String!]!
   me: User!
 }
 
@@ -473,6 +468,7 @@ type Mutation {
   removeRailwayToken(id: String!): RemoveRailwayToken!
   authorize(payload: AuthorizeDTO!): User!
   createNewRailwayProject(payload: CreateNewRailwayProjectDTO!): Project!
+  createNewRailwayProjectService(payload: CreateNewRailwayProjectServiceDTO!): Project!
 }
 
 input ConnectRailwayAccountDTO {
@@ -497,4 +493,23 @@ input CreateNewRailwayProjectDTO {
 input Repo {
   fullRepoName: String!
   branch: String!
+}
+
+input CreateNewRailwayProjectServiceDTO {
+  tokenId: String
+  projectId: String!
+  name: String
+  branch: String
+  variables: [CreateNewRailwayProjectServiceVariables!]
+  source: CreateNewRailwayProjectServiceSource
+}
+
+input CreateNewRailwayProjectServiceVariables {
+  key: String!
+  value: String!
+}
+
+input CreateNewRailwayProjectServiceSource {
+  image: String
+  repo: String
 }

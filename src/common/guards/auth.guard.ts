@@ -9,6 +9,7 @@ import { GqlExecutionContext } from '@nestjs/graphql';
 import { AuthGuard as PassportAuthGuard } from '@nestjs/passport';
 import * as jwt from 'jsonwebtoken';
 import { ConfigService } from 'src/config/config.service';
+import { PrismaService } from 'src/prisma/prisma.service';
 
 @Injectable()
 export class AuthGuard extends PassportAuthGuard('jwt') {
@@ -16,6 +17,9 @@ export class AuthGuard extends PassportAuthGuard('jwt') {
 
   @Inject()
   configService: ConfigService;
+
+  @Inject()
+  prismaService: PrismaService;
 
   getRequest(context: ExecutionContext) {
     const ctx = GqlExecutionContext.create(context);
@@ -36,8 +40,11 @@ export class AuthGuard extends PassportAuthGuard('jwt') {
       }
 
       const decoded = jwt.verify(token, clerkPublicKey);
-      request.user = decoded;
+      const user = await this.prismaService.user.findFirstOrThrow({
+        where: { uid: decoded.sub },
+      });
 
+      request.user = { userId: user.id, ...decoded };
       return true;
     } catch (error) {
       this.logger.error(error);

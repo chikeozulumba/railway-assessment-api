@@ -19,7 +19,7 @@ datasource db {
 model Project {
   id               String    @id @default(auto()) @map("_id") @db.ObjectId
   userId           String    @map("user_id") @db.ObjectId
-  tokenId          String?   @db.ObjectId @map("token_id")
+  tokenId          String?   @map("token_id") @db.ObjectId
   token            Token?    @relation(fields: [tokenId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   user             User      @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   railwayProjectId String    @unique @map("railway_project_id")
@@ -88,16 +88,15 @@ enum UserStatus {
 
 model Token {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId    String   @map("user_id") @db.ObjectId
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  userId    String?   @map("user_id") @db.ObjectId @unique
+  user      User?    
   name      String?
   value     String   @unique
   isDefault Boolean? @default(false)
 
-  createdAt    DateTime         @default(now()) @map("created_at")
-  updatedAt    DateTime         @default(now()) @updatedAt @map("updated_at")
-  repositories UserRepository[]
-  projects     Project[]
+  createdAt DateTime  @default(now()) @map("created_at")
+  updatedAt DateTime  @default(now()) @updatedAt @map("updated_at")
+  projects  Project[]
 
   @@map("tokens")
 }
@@ -107,7 +106,8 @@ model User {
   uid                       String  @unique @map("uid")
   fullName                  String? @map("full_name")
   email                     String?
-  activeRailwayToken        String? @map("active_railway_token") @db.ObjectId
+  defaultRailwayTokenId     String? @unique @map("default_railway_token") @db.ObjectId
+  defaultRailwayToken       Token?  @relation(fields: [defaultRailwayTokenId], references: [id], onDelete: Cascade, onUpdate: Cascade)
   railwayId                 String? @map("railway_id")
   railwayregistrationStatus String? @map("railway_registration_status")
   railwayAccountStatus      String? @map("railway_account_status")
@@ -116,36 +116,8 @@ model User {
   updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
 
   projects         Project[]
-  tokens           Token[]
   services         Service[]
   serviceInstances ServiceInstance[]
-  repositories     UserRepository[]
 
   @@map("users")
-}
-
-model UserRepository {
-  id             String   @id @default(auto()) @map("_id") @db.ObjectId
-  userId         String   @map("user_id") @db.ObjectId
-  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  repoId         Int      @map("repo_id")
-  tokenId        String   @map("token_id") @db.ObjectId
-  token          Token    @relation(fields: [tokenId], references: [id], onDelete: Cascade, onUpdate: Cascade)
-  name           String?
-  fullName       String?  @unique @map("full_name")
-  defaultBranch  String?  @map("default_branch")
-  installationId String?  @map("installation_id")
-  isPrivate      Boolean? @default(false) @map("is_private")
-  branchesLoaded Boolean? @default(false) @map("branches_loaded")
-  branches       Json?
-
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @default(now()) @updatedAt @map("updated_at")
-
-  @@map("user_repositories")
-}
-
-enum UserAuthProvider {
-  google
-  github
 }

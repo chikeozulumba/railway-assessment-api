@@ -1,5 +1,5 @@
 import {
-  HttpStatus,                                             
+  HttpStatus,
   Injectable,
   InternalServerErrorException,
   Logger,
