@@ -461,6 +461,7 @@ type Query {
   fetchUserGithubRepositories(tokenId: String): [UserRepository!]!
   fetchUserGithubRepositoryBranches(repo: String!, tokenId: String): [String!]!
   me: User!
+  getRailwayProject(projectId: String!): Project!
 }
 
 type Mutation {
@@ -468,6 +469,7 @@ type Mutation {
   removeRailwayToken(id: String!): RemoveRailwayToken!
   authorize(payload: AuthorizeDTO!): User!
   createNewRailwayProject(payload: CreateNewRailwayProjectDTO!): Project!
+  deleteRailwayProject(id: String!): Boolean!
   createNewRailwayProjectService(payload: CreateNewRailwayProjectServiceDTO!): Project!
 }
 

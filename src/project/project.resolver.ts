@@ -1,5 +1,5 @@
 import { UseGuards } from '@nestjs/common';
-import { Args, Mutation, Resolver } from '@nestjs/graphql';
+import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { AuthGuard } from 'src/common/guards/auth.guard';
 import { Project } from 'src/models';
 import { ProjectService } from './project.service';
@@ -18,5 +18,21 @@ export class ProjectResolver {
     @GetUser() user: AuthUser,
   ) {
     return await this.projectService.createNewRailwayProject(user, payload);
+  }
+
+  @Query(() => Project)
+  async getRailwayProject(
+    @Args('projectId') projectId: string,
+    @GetUser() user: AuthUser,
+  ) {
+    return await this.projectService.getRailwayProject(user, projectId);
+  }
+
+  @Mutation(() => Boolean)
+  async deleteRailwayProject(
+    @Args('id') id: string,
+    @GetUser() user: AuthUser,
+  ) {
+    return await this.projectService.deleteRailwayProject(user, id);
   }
 }

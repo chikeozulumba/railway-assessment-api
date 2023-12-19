@@ -1,17 +1,92 @@
-import { BadRequestException, Injectable } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { ApolloError } from '@apollo/client/core';
 import { CreateNewRailwayProjectDTO } from './dto/project.input';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { RailwayClientService } from 'src/railway-client/railway-client.service';
-import { GQL_CREATE_RAILWAY_PROJECT_MUTATION } from './gql';
+import { GQL_CREATE_RAILWAY_PROJECT_MUTATION, GQL_DELETE_RAILWAY_PROJECT_MUTATION } from './gql';
 import type { AuthUser } from 'src/@types/auth';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 
 @Injectable()
 export class ProjectService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly railwayClientService: RailwayClientService,
-  ) {}
+  ) { }
+
+  /**
+   * Method for removing railway projects
+   *
+   * @param {AuthUser} user
+   * @param {string} projectId
+   *
+   * @return {Project}
+   */
+  async deleteRailwayProject(user: AuthUser, projectId: string) {
+    try {
+      const project = await this.prismaService.project.findFirst({
+        where: { id: projectId },
+        include: {
+          token: true,
+          services: {
+            include: {
+              instances: true
+            }
+          }
+        }
+      });
+
+      if (project.token) {
+        const { data } = await this.railwayClientService.client.mutate({
+          mutation: GQL_DELETE_RAILWAY_PROJECT_MUTATION,
+          variables: { payload: { id: project.railwayProjectId } },
+          context: {
+            headers: {
+              Authorization: 'Bearer ' + project.token.value,
+            },
+          },
+        });
+      }
+
+      await this.prismaService.project.delete({ where: { id: project.id } })
+      return true;
+    } catch (error) {
+      if (error instanceof PrismaClientKnownRequestError) {
+        throw new NotFoundException("PROJECT_NOT_FOUND")
+      }
+
+      return false;
+    }
+  }
+
+  /**
+   * Method for retrieving railway projects
+   *
+   * @param {AuthUser} user
+   * @param {string} projectId
+   *
+   * @return {Project}
+   */
+  async getRailwayProject(user: AuthUser, projectId: string) {
+    try {
+      const project = await this.prismaService.project.findFirstOrThrow({
+        where: { id: projectId },
+        include: {
+          services: {
+            include: {
+              instances: true
+            }
+          }
+        }
+      });
+
+      return project;
+    } catch (error) {
+      if (error instanceof PrismaClientKnownRequestError) {
+        throw new NotFoundException("PROJECT_NOT_FOUND")
+      }
+    }
+  }
 
   /**
    * Method for creating new railway projects

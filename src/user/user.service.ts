@@ -107,6 +107,7 @@ export class UserService {
     { userId }: AuthUser,
     { repo, tokenId }: { [key: string]: string },
   ): Promise<string[]> {
+    console.log('fetchUserGithubRepositoryBranches');
     try {
       const key = `GITHUB-BR-${repo}`.toLowerCase().replaceAll('/', '-');
       const data = await this.cacheService.get<string | null>(key);
@@ -162,7 +163,6 @@ export class UserService {
   async fetchUserGithubRepositories({
     userId,
   }: AuthUser, tokenId?: string): Promise<Partial<UserRepository>[]> {
-
     const key = `GITHUB-REPO-${userId}`.toLowerCase().replaceAll('/', '-');
     const cachedData = await this.cacheService.get<string | null>(key);
 
