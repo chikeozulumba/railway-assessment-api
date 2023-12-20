@@ -470,7 +470,9 @@ type Mutation {
   authorize(payload: AuthorizeDTO!): User!
   createNewRailwayProject(payload: CreateNewRailwayProjectDTO!): Project!
   deleteRailwayProject(id: String!): Boolean!
+  getRailwayProjectDeployments(id: String!): Boolean!
   createNewRailwayProjectService(payload: CreateNewRailwayProjectServiceDTO!): Project!
+  deleteRailwayService(id: String!): Boolean!
 }
 
 input ConnectRailwayAccountDTO {
@@ -493,8 +495,8 @@ input CreateNewRailwayProjectDTO {
 }
 
 input Repo {
-  fullRepoName: String!
-  branch: String!
+  fullRepoName: String
+  branch: String
 }
 
 input CreateNewRailwayProjectServiceDTO {

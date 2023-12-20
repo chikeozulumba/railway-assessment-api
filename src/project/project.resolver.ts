@@ -35,4 +35,12 @@ export class ProjectResolver {
   ) {
     return await this.projectService.deleteRailwayProject(user, id);
   }
+
+  @Mutation(() => Boolean)
+  async getRailwayProjectDeployments(
+    @Args('id') id: string,
+    @GetUser() user: AuthUser,
+  ) {
+    return await this.projectService.deleteRailwayProject(user, id);
+  }
 }

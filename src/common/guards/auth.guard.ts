@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { GqlExecutionContext } from '@nestjs/graphql';
 import { AuthGuard as PassportAuthGuard } from '@nestjs/passport';
+import { Request } from 'express';
 import * as jwt from 'jsonwebtoken';
 import { ConfigService } from 'src/config/config.service';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -29,7 +30,7 @@ export class AuthGuard extends PassportAuthGuard('jwt') {
   async canActivate(context: ExecutionContext) {
     try {
       const clerkPublicKey = this.configService.get('CLERK_PEM_PUBLIC_KEY');
-      const request = this.getRequest(context);
+      const request: Request = this.getRequest(context);
       const sessionToken = request.cookies['__session'];
       const headerToken = request.headers['x-auth-token'];
 
@@ -40,9 +41,13 @@ export class AuthGuard extends PassportAuthGuard('jwt') {
       }
 
       const decoded = jwt.verify(token, clerkPublicKey);
-      const user = await this.prismaService.user.findFirstOrThrow({
+      let user = await this.prismaService.user.findFirst({
         where: { uid: decoded.sub },
       });
+
+      if (!user && request.body?.operationName === 'Authorize') {
+        return true;
+      } 
 
       request.user = { userId: user.id, ...decoded };
       return true;

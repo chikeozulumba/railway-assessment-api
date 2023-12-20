@@ -4,10 +4,10 @@ import { IsOptional } from 'class-validator';
 @InputType()
 class Repo {
   @Field()
-  fullRepoName: string;
+  fullRepoName?: string;
 
   @Field()
-  branch: string;
+  branch?: string;
 }
 
 @InputType()

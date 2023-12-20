@@ -107,7 +107,6 @@ export class UserService {
     { userId }: AuthUser,
     { repo, tokenId }: { [key: string]: string },
   ): Promise<string[]> {
-    console.log('fetchUserGithubRepositoryBranches');
     try {
       const key = `GITHUB-BR-${repo}`.toLowerCase().replaceAll('/', '-');
       const data = await this.cacheService.get<string | null>(key);
@@ -131,7 +130,6 @@ export class UserService {
       });
 
       const [owner, repoName] = repo.split('/');
-      console.log(owner, repoName)
       const response = await this.railwayClientService.client.query({
         query: GQL_USER_GITHUB_REPOSITORY_WITH_BRANCHES_QUERY,
         variables: { owner, repo: repoName },
@@ -149,7 +147,6 @@ export class UserService {
       await this.cacheService.set(key, JSON.stringify(branches));
       return branches;
     } catch (error) {
-      console.log(error);
       throw new InternalServerErrorException(error);
     }
   }
@@ -175,6 +172,7 @@ export class UserService {
     });
 
     const tokenIdToBeUsed = tokenId || user.defaultRailwayTokenId;
+    console.log(user)
 
     if (!tokenIdToBeUsed) {
       throw new Error('Invalid Railway token selected.');

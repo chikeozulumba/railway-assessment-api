@@ -18,4 +18,12 @@ export class ServiceResolver {
   ) {
     return await this.service.createNewRailwayProjectService(user, payload);
   }
+
+  @Mutation(() => Boolean)
+  async deleteRailwayService(
+    @Args('id') id: string,
+    @GetUser() user: AuthUser,
+  ): Promise<boolean> {
+    return await this.service.deleteRailwayService(user, id);
+  }
 }

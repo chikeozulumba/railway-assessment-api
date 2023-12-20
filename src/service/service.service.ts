@@ -1,9 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { RailwayClientService } from 'src/railway-client/railway-client.service';
-import { GQL_CREATE_RAILWAY_PROJECT_SERVICE_MUTATION } from './gql';
+import { GQL_CREATE_RAILWAY_PROJECT_SERVICE_MUTATION, GQL_DELETE_RAILWAY_SERVICE_MUTATION } from './gql';
 import { CreateNewRailwayProjectServiceDTO } from './dto/service.input';
 import type { AuthUser } from 'src/@types/auth';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 
 @Injectable()
 export class ServiceService {
@@ -11,6 +12,51 @@ export class ServiceService {
     private readonly prismaService: PrismaService,
     private readonly railwayClientService: RailwayClientService,
   ) { }
+
+  /**
+   * Method for creating new railway projects
+   *
+   * @param {AuthUser} user
+   * @param {string} id
+   *
+   * @return {boolean|void}
+   */
+  async deleteRailwayService(user: AuthUser, id: string) {
+    try {
+      const service = await this.prismaService.service.findFirstOrThrow({
+        where: { id, userId: user.userId },
+        include: {
+          project: {
+            include: {
+              token: true,
+            }
+          },
+        }
+      });
+
+      if (service.project?.token?.value) {
+        const { data } = await this.railwayClientService.client.mutate({
+          mutation: GQL_DELETE_RAILWAY_SERVICE_MUTATION,
+          variables: { id: service.railwayServiceId },
+          context: {
+            headers: {
+              Authorization: 'Bearer ' + service.project.token.value,
+            },
+          },
+        });
+        if (!data.serviceDelete) throw new Error();
+      }
+
+      await this.prismaService.service.delete({ where: { id } })
+      return true;
+    } catch (error) {
+      if (error instanceof PrismaClientKnownRequestError) {
+        throw new NotFoundException("SERVICE_NOT_FOUND")
+      }
+
+      return false;
+    }
+  }
 
   /**
    * Method for creating new railway projects
@@ -39,8 +85,6 @@ export class ServiceService {
       projectId: project.railwayProjectId,
       variables: Object.keys(envVariables).length > 0 ? envVariables : undefined,
     };
-
-    console.log(input)
 
     const { data } = await this.railwayClientService.client.mutate({
       mutation: GQL_CREATE_RAILWAY_PROJECT_SERVICE_MUTATION,

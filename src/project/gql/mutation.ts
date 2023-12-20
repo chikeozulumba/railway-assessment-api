@@ -7,8 +7,8 @@ export const GQL_DELETE_RAILWAY_PROJECT_MUTATION = gql`
 `;
 
 export const GQL_CREATE_RAILWAY_PROJECT_MUTATION = gql`
-  mutation CreateRailwayProject($id: ProjectCreateInput!) {
-    projectCreate(input: $payload) {
+  mutation CreateRailwayProject($input: ProjectCreateInput!) {
+    projectCreate(input: $input) {
       id
       name
       createdAt

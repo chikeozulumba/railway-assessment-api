@@ -24,8 +24,8 @@ export class ProjectService {
    */
   async deleteRailwayProject(user: AuthUser, projectId: string) {
     try {
-      const project = await this.prismaService.project.findFirst({
-        where: { id: projectId },
+      const project = await this.prismaService.project.findFirstOrThrow({
+        where: { id: projectId, userId: user.userId },
         include: {
           token: true,
           services: {
@@ -39,13 +39,14 @@ export class ProjectService {
       if (project.token) {
         const { data } = await this.railwayClientService.client.mutate({
           mutation: GQL_DELETE_RAILWAY_PROJECT_MUTATION,
-          variables: { payload: { id: project.railwayProjectId } },
+          variables: { id: project.railwayProjectId },
           context: {
             headers: {
               Authorization: 'Bearer ' + project.token.value,
             },
           },
         });
+        if (!data.projectDelete) throw new Error();
       }
 
       await this.prismaService.project.delete({ where: { id: project.id } })
@@ -103,6 +104,7 @@ export class ProjectService {
     try {
       const user = await this.prismaService.user.findFirstOrThrow({
         where: { id: userId },
+        
         include: {
           defaultRailwayToken: true,
         },
@@ -120,7 +122,7 @@ export class ProjectService {
 
       const { data } = await this.railwayClientService.client.mutate({
         mutation: GQL_CREATE_RAILWAY_PROJECT_MUTATION,
-        variables: { payload: { ...payload } },
+        variables: { input: payload },
         context: {
           headers: {
             Authorization: 'Bearer ' + token.value,
@@ -131,7 +133,7 @@ export class ProjectService {
       return await this.prismaService.$transaction(async (prisma) => {
         const record = data.projectCreate;
 
-        const project = await this.prismaService.project.create({
+        const project = await prisma.project.create({
           data: {
             userId: user.id,
             railwayProjectId: record.id,
@@ -200,6 +202,7 @@ export class ProjectService {
       });
     } catch (error) {
       if (error instanceof ApolloError) {
+        console.log(error.networkError)
         throw new BadRequestException(
           'Error encountered while creating project on Railway.',
         );
