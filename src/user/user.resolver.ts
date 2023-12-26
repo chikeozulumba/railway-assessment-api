@@ -11,7 +11,7 @@ import type { AuthUser } from 'src/@types/auth';
 @UseGuards(AuthGuard)
 @Resolver(() => User)
 export class UserResolver {
-  constructor(readonly userService: UserService) { }
+  constructor(readonly userService: UserService) {}
 
   @Mutation(() => User)
   async connectRailwayAccount(
@@ -41,9 +41,9 @@ export class UserResolver {
 
   @Query(() => [UserRepository])
   async fetchUserGithubRepositories(
-      @GetUser() user: AuthUser,
-      @Args({ name: 'tokenId', nullable: true }) tokenId?: string,
-    ) {
+    @GetUser() user: AuthUser,
+    @Args({ name: 'tokenId', nullable: true }) tokenId?: string,
+  ) {
     return await this.userService.fetchUserGithubRepositories(user, tokenId);
   }
 

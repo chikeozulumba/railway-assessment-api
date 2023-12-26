@@ -97,6 +97,7 @@ type Service {
   projectId: String!
   railwayServiceId: String!
   name: String
+  icon: String
   serviceCreatedAt: DateTime
   serviceUpdatedAt: DateTime
   createdAt: DateTime!
@@ -223,6 +224,7 @@ type ServiceCountAggregate {
   projectId: Int!
   railwayServiceId: Int!
   name: Int!
+  icon: Int!
   serviceCreatedAt: Int!
   serviceUpdatedAt: Int!
   createdAt: Int!
@@ -236,6 +238,7 @@ type ServiceMinAggregate {
   projectId: String
   railwayServiceId: String
   name: String
+  icon: String
   serviceCreatedAt: DateTime
   serviceUpdatedAt: DateTime
   createdAt: DateTime
@@ -248,6 +251,7 @@ type ServiceMaxAggregate {
   projectId: String
   railwayServiceId: String
   name: String
+  icon: String
   serviceCreatedAt: DateTime
   serviceUpdatedAt: DateTime
   createdAt: DateTime
@@ -462,6 +466,18 @@ type Query {
   fetchUserGithubRepositoryBranches(repo: String!, tokenId: String): [String!]!
   me: User!
   getRailwayProject(projectId: String!): Project!
+  getRailwayProjectDeployments(projectId: String!): String!
+  getRailwayService(serviceId: String!): String!
+  getRailwayServiceDeployments(serviceId: String!): String!
+  getDeployments(payload: GetRailwayDeploymentsDTO!): String!
+  getDeployment(deploymentId: String!, tokenId: String!): String!
+  getDeploymentLogs(deploymentId: String!, tokenId: String!, limit: String!): String!
+  getDeploymentBuildLogs(deploymentId: String!, tokenId: String!, limit: String!): String!
+}
+
+input GetRailwayDeploymentsDTO {
+  projectId: String
+  serviceId: String
 }
 
 type Mutation {
@@ -470,7 +486,6 @@ type Mutation {
   authorize(payload: AuthorizeDTO!): User!
   createNewRailwayProject(payload: CreateNewRailwayProjectDTO!): Project!
   deleteRailwayProject(id: String!): Boolean!
-  getRailwayProjectDeployments(id: String!): Boolean!
   createNewRailwayProjectService(payload: CreateNewRailwayProjectServiceDTO!): Project!
   deleteRailwayService(id: String!): Boolean!
 }

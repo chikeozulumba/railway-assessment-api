@@ -13,6 +13,8 @@ import { QueueModule } from './queue/queue.module';
 import { ProjectModule } from './project/project.module';
 import { CacheModule } from './cache/cache.module';
 import { ServiceModule } from './service/service.module';
+import { DeploymentResolver } from './deployment/deployment.resolver';
+import { DeploymentModule } from './deployment/deployment.module';
 
 @Module({
   imports: [
@@ -80,6 +82,7 @@ import { ServiceModule } from './service/service.module';
     RailwayClientModule,
     ProjectModule,
     ServiceModule,
+    DeploymentModule,
   ],
 })
 export class AppModule {}

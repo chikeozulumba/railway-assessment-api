@@ -1,5 +1,5 @@
 import { UseGuards } from '@nestjs/common';
-import { Args, Mutation, Resolver } from '@nestjs/graphql';
+import { Args, Mutation, Query, Resolver } from '@nestjs/graphql';
 import { AuthUser } from 'src/@types/auth';
 import { GetUser } from 'src/common/decorators/user.decorator';
 import { Project, Service } from 'src/models';
@@ -25,5 +25,21 @@ export class ServiceResolver {
     @GetUser() user: AuthUser,
   ): Promise<boolean> {
     return await this.service.deleteRailwayService(user, id);
+  }
+
+  @Query(() => String)
+  async getRailwayService(
+    @Args('serviceId') serviceId: string,
+    @GetUser() user: AuthUser,
+  ) {
+    return await this.service.getRailwayService(user, serviceId);
+  }
+
+  @Query(() => String)
+  async getRailwayServiceDeployments(
+    @Args('serviceId') serviceId: string,
+    @GetUser() user: AuthUser,
+  ) {
+    return await this.service.getRailwayServiceDeployments(user, serviceId);
   }
 }

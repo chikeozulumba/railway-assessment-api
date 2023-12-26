@@ -1,18 +1,29 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import { ApolloError } from '@apollo/client/core';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { CreateNewRailwayProjectDTO } from './dto/project.input';
 import { PrismaService } from 'src/prisma/prisma.service';
 import { RailwayClientService } from 'src/railway-client/railway-client.service';
-import { GQL_CREATE_RAILWAY_PROJECT_MUTATION, GQL_DELETE_RAILWAY_PROJECT_MUTATION } from './gql';
+import {
+  GQL_CREATE_RAILWAY_PROJECT_MUTATION,
+  GQL_DELETE_RAILWAY_PROJECT_MUTATION,
+} from './gql';
+import { GQL_GET_RAILWAY_PROJECT_DEPLOYMENTS_QUERY } from './gql/query';
+import { CacheService } from 'src/cache/cache.service';
 import type { AuthUser } from 'src/@types/auth';
-import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 
 @Injectable()
 export class ProjectService {
   constructor(
     private readonly prismaService: PrismaService,
+    private readonly cacheService: CacheService,
     private readonly railwayClientService: RailwayClientService,
-  ) { }
+  ) {}
 
   /**
    * Method for removing railway projects
@@ -30,10 +41,10 @@ export class ProjectService {
           token: true,
           services: {
             include: {
-              instances: true
-            }
-          }
-        }
+              instances: true,
+            },
+          },
+        },
       });
 
       if (project.token) {
@@ -49,14 +60,63 @@ export class ProjectService {
         if (!data.projectDelete) throw new Error();
       }
 
-      await this.prismaService.project.delete({ where: { id: project.id } })
+      await this.prismaService.project.delete({ where: { id: project.id } });
       return true;
     } catch (error) {
       if (error instanceof PrismaClientKnownRequestError) {
-        throw new NotFoundException("PROJECT_NOT_FOUND")
+        throw new NotFoundException('PROJECT_NOT_FOUND');
       }
 
       return false;
+    }
+  }
+
+  /**
+   * Method for retrieving railway projects deployments
+   *
+   * @param {AuthUser} user
+   * @param {string} projectId
+   *
+   * @return {any}
+   */
+  async getRailwayProjectDeployments(user: AuthUser, projectId: string) {
+    try {
+      const key = `PROJECT-DEPLOYMENTS-${projectId}`.toLowerCase().replaceAll('/', '-');
+      const project = await this.prismaService.project.findFirstOrThrow({
+        where: { id: projectId },
+        include: {
+          token: true,
+        }
+      });
+
+      const cachedData = await this.cacheService.get<string | null>(key);
+      if (cachedData) {
+        return JSON.parse(String(cachedData));
+      }
+
+      let { data } = await this.railwayClientService.client.query({
+        query: GQL_GET_RAILWAY_PROJECT_DEPLOYMENTS_QUERY,
+        variables: { input: { projectId: project.railwayProjectId } },
+        context: {
+          headers: {
+            Authorization: 'Bearer ' + project.token.value,
+          },
+        },
+      });
+
+      data = JSON.stringify(data?.deployments || []);
+      await this.cacheService.set(key, JSON.stringify(data), 600);
+
+      return data;
+    } catch (error) {
+      if (error instanceof ApolloError) {
+        throw new BadRequestException('Request could not be processed at this time.');
+      }
+      if (error instanceof PrismaClientKnownRequestError) {
+        throw new NotFoundException('PROJECT_NOT_FOUND');
+      }
+
+      throw new InternalServerErrorException();
     }
   }
 
@@ -75,17 +135,18 @@ export class ProjectService {
         include: {
           services: {
             include: {
-              instances: true
-            }
-          }
-        }
+              instances: true,
+            },
+          },
+        },
       });
 
       return project;
     } catch (error) {
       if (error instanceof PrismaClientKnownRequestError) {
-        throw new NotFoundException("PROJECT_NOT_FOUND")
+        throw new NotFoundException('PROJECT_NOT_FOUND');
       }
+      throw new InternalServerErrorException();
     }
   }
 
@@ -104,7 +165,7 @@ export class ProjectService {
     try {
       const user = await this.prismaService.user.findFirstOrThrow({
         where: { id: userId },
-        
+
         include: {
           defaultRailwayToken: true,
         },
@@ -157,6 +218,7 @@ export class ProjectService {
               projectId: project.id,
               railwayServiceId: service.node.id,
               name: service.node.name,
+              icon: service.node.icon,
               userId: user.id,
               serviceCreatedAt: service.node.createdAt,
               serviceUpdatedAt: service.node.updatedAt,
@@ -202,7 +264,6 @@ export class ProjectService {
       });
     } catch (error) {
       if (error instanceof ApolloError) {
-        console.log(error.networkError)
         throw new BadRequestException(
           'Error encountered while creating project on Railway.',
         );

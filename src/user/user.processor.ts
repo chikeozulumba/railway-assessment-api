@@ -98,6 +98,7 @@ export class UserProcessor {
               projectId: newProject.id,
               railwayServiceId: service.node.id,
               name: service.node.name,
+              icon: service.node.icon,
               userId: user.id,
               serviceCreatedAt: service.node.createdAt,
               serviceUpdatedAt: service.node.updatedAt,

@@ -41,13 +41,13 @@ export class AuthGuard extends PassportAuthGuard('jwt') {
       }
 
       const decoded = jwt.verify(token, clerkPublicKey);
-      let user = await this.prismaService.user.findFirst({
+      const user = await this.prismaService.user.findFirst({
         where: { uid: decoded.sub },
       });
 
       if (!user && request.body?.operationName === 'Authorize') {
         return true;
-      } 
+      }
 
       request.user = { userId: user.id, ...decoded };
       return true;

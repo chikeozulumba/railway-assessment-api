@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   Injectable,
   InternalServerErrorException,
   UnauthorizedException,
@@ -30,7 +29,7 @@ export class UserService {
     private readonly prismaService: PrismaService,
     private readonly cacheService: CacheService,
     private readonly railwayClientService: RailwayClientService,
-  ) { }
+  ) {}
 
   /**
    * Method for removing railway token by ID
@@ -157,9 +156,10 @@ export class UserService {
    * @param {User} user
    * @return {Partial<UserRepository>[]}
    */
-  async fetchUserGithubRepositories({
-    userId,
-  }: AuthUser, tokenId?: string): Promise<Partial<UserRepository>[]> {
+  async fetchUserGithubRepositories(
+    { userId }: AuthUser,
+    tokenId?: string,
+  ): Promise<Partial<UserRepository>[]> {
     const key = `GITHUB-REPO-${userId}`.toLowerCase().replaceAll('/', '-');
     const cachedData = await this.cacheService.get<string | null>(key);
 
@@ -172,7 +172,7 @@ export class UserService {
     });
 
     const tokenIdToBeUsed = tokenId || user.defaultRailwayTokenId;
-    console.log(user)
+    console.log(user);
 
     if (!tokenIdToBeUsed) {
       throw new Error('Invalid Railway token selected.');

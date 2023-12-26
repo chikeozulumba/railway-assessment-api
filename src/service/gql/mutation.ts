@@ -2,13 +2,13 @@ import { gql } from '@apollo/client/core';
 
 export const GQL_DELETE_RAILWAY_SERVICE_MUTATION = gql`
   mutation DeleteRailwayService($id: String!) {
-    serviceDelete(id: $id) 
+    serviceDelete(id: $id)
   }
 `;
 
 export const GQL_CREATE_RAILWAY_PROJECT_SERVICE_MUTATION = gql`
   mutation ProjectCreateService($input: ServiceCreateInput!) {
-    serviceCreate(input: $input) { 
+    serviceCreate(input: $input) {
       id
       name
       serviceInstances {
