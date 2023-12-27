@@ -1,17 +1,17 @@
-import { InputType } from '@nestjs/graphql';
+import { Field, InputType, ObjectType } from '@nestjs/graphql';
 import { IsBoolean, IsOptional, IsUUID } from 'class-validator';
 
-@InputType()
+@ObjectType()
 export class UserGithubRepositoryDTO {
-  @IsUUID()
+  @Field()
   id: string;
 
-  @IsUUID()
+  @Field()
   fullName: string;
 
-  @IsUUID()
+  @Field()
   defaultBranch: string;
 
-  @IsUUID()
+  @Field()
   isPrivate: boolean;
 }
