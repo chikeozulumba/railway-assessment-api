@@ -61,8 +61,6 @@ export class UserProcessor {
     const user = job.data.user;
     const token = job.data.token;
 
-    console.log(projects)
-
     await this.prismaService.$transaction(async (prisma) => {
       // User profile
 
@@ -167,6 +165,8 @@ export class UserProcessor {
           }
         }
       }
+    }, {
+      timeout: 200000,
     });
   }
 }
