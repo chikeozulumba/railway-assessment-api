@@ -35,7 +35,7 @@ export class AuthGuard extends PassportAuthGuard('jwt') {
       const headerToken = request.headers['authorization'];
 
       let token = sessionToken || headerToken;
-      this.logger.debug(request.body?.operationName)
+      this.logger.debug('operation name', request.body?.operationName);
 
       if (!token) {
         return false;
@@ -52,11 +52,15 @@ export class AuthGuard extends PassportAuthGuard('jwt') {
         return true;
       }
 
+      if (!user) {
+        throw new Error('NOT_AUTHORIZED');
+      }
+
       request.user = { userId: user.id, ...decoded };
       return true;
     } catch (error) {
       this.logger.error(error);
-      throw new UnauthorizedException();
+      throw new UnauthorizedException(error);
     }
   }
 }
