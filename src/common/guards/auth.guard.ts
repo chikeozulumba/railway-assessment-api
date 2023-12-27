@@ -32,9 +32,10 @@ export class AuthGuard extends PassportAuthGuard('jwt') {
       const clerkPublicKey = this.configService.get('CLERK_PEM_PUBLIC_KEY');
       const request: Request = this.getRequest(context);
       const sessionToken = request.cookies['__session'];
-      const headerToken = request.headers['x-auth-token'];
+      const headerToken = request.headers['authorization'];
 
       const token = sessionToken || headerToken;
+      this.logger.debug(request.body?.operationName)
 
       if (!token) {
         return false;
