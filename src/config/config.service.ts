@@ -34,10 +34,10 @@ export class ConfigService {
   }
 
   allowedHeaders() {
-    const clientOrigins: string = this.get('CLIENT_ORIGINS');
-    return clientOrigins
+    const clientOrigins: string = this.get('CLIENT_ORIGINS')
       .split(',')
       .filter(Boolean)
       .map((origin) => origin.trim());
+    return clientOrigins;
   }
 }
