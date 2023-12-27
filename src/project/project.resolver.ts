@@ -43,4 +43,13 @@ export class ProjectResolver {
   ) {
     return await this.projectService.getRailwayProjectDeployments(user, projectId);
   }
+
+  @Mutation(() => Boolean)
+  async deployGithubRepo(
+    @Args('projectId') projectId: string,
+    @Args('repo') repo: string,
+    @GetUser() user: AuthUser,
+  ) {
+    return await this.projectService.deployGithubRepo(user, projectId, repo);
+  }
 }

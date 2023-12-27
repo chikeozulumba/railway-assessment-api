@@ -6,6 +6,12 @@ export const GQL_DELETE_RAILWAY_PROJECT_MUTATION = gql`
   }
 `;
 
+export const GQL_DEPLOY_GITHUB_REPO_TO_RAILWAY_PROJECT_MUTATION = gql`
+  mutation DeployGithubRepoToProject($input: GitHubRepoDeployInput!) {
+    githubRepoDeploy(input: $input)
+  }
+`;
+
 export const GQL_CREATE_RAILWAY_PROJECT_MUTATION = gql`
   mutation CreateRailwayProject($input: ProjectCreateInput!) {
     projectCreate(input: $input) {

@@ -172,7 +172,6 @@ export class UserService {
     });
 
     const tokenIdToBeUsed = tokenId || user.defaultRailwayTokenId;
-    console.log(user);
 
     if (!tokenIdToBeUsed) {
       throw new Error('Invalid Railway token selected.');
@@ -196,6 +195,7 @@ export class UserService {
         id: repo.id,
         fullName: repo.fullName,
         defaultBranch: repo.defaultBranch,
+        isPrivate: repo.isPrivate,
       }))
       .sort((a, b) => a.fullName.localeCompare(b.fullName));
 

@@ -52,7 +52,6 @@ export class UserProcessor {
   @Process('LOAD_PROJECTS_AND_SERVICES')
   async loadProjectsAndServices(
     job: Job<{
-      railwayId: string;
       user: User;
       token: Token;
       projects: any[];
@@ -62,6 +61,8 @@ export class UserProcessor {
     const user = job.data.user;
     const token = job.data.token;
 
+    console.log(projects)
+
     await this.prismaService.$transaction(async (prisma) => {
       // User profile
 
@@ -69,25 +70,51 @@ export class UserProcessor {
       for (let i = 0; i < projects.length; i++) {
         const project = projects[i];
 
-        const payload = {
-          name: project.node.name,
-          railwayProjectId: project.node.id,
-          userId: user.id,
-          description: project.node.description,
-          projectCreatedAt: project.node.createdAt,
-          projectUpdatedAt: project.node.updatedAt,
-          prDeploys: project.node.prDeploys,
-          prForks: project.node.prForks,
-          tokenId: token.id,
-        };
+        let payload: any = {};
+        let railwayProjectId;
+        let projectServices;
+
+        if (project.node) {
+          railwayProjectId = project.node.id;
+          projectServices = project.node.services?.edges;
+          payload = {
+            name: project.node.name,
+            railwayProjectId: project.node.id,
+            userId: user.id,
+            description: project.node.description,
+            projectCreatedAt: project.node.createdAt,
+            projectUpdatedAt: project.node.updatedAt,
+            prDeploys: project.node.prDeploys,
+            prForks: project.node.prForks,
+            tokenId: token.id,
+          }
+        }
+
+        if (project?.id) {
+          railwayProjectId = project.id;
+          projectServices = project.services?.edges;
+          payload = {
+            name: project.name,
+            railwayProjectId: project.id,
+            userId: user.id,
+            description: project.description,
+            projectCreatedAt: project.createdAt,
+            projectUpdatedAt: project.updatedAt,
+            prDeploys: project.prDeploys,
+            prForks: project.prForks,
+            tokenId: token.id,
+          }
+        }
+
+        if (Object.keys(payload).length === 0) {
+          throw new Error('Cannot process project payload');
+        }
 
         const newProject = await prisma.project.upsert({
-          where: { railwayProjectId: project.node.id },
+          where: { railwayProjectId },
           create: payload,
           update: payload,
         });
-
-        const projectServices = project.node.services?.edges;
 
         if (projectServices.length > 0) {
           for (let j = 0; j < projectServices.length; j++) {

@@ -58,3 +58,56 @@ export const GQL_GET_RAILWAY_PROJECT_DEPLOYMENTS_QUERY = gql`
     }
   }
 `;
+
+
+export const GQL_GET_RAILWAY_PROJECT_QUERY = gql`
+  query GetProject($id: String!) {
+    project(id: $id) {
+      id
+      name
+      description
+      createdAt
+      prDeploys
+      prForks
+      updatedAt
+      services {
+        edges {
+          node {
+            id
+            name
+            createdAt
+            updatedAt
+            serviceInstances {
+              edges {
+                node {
+                  domains {
+                    serviceDomains {
+                      domain
+                    }
+                    customDomains {
+                      domain
+                    }
+                  }
+                  builder
+                  buildCommand
+                  id
+                  source {
+                    image
+                    repo
+                    template {
+                      serviceName
+                      serviceSource
+                    }
+                  }
+                  startCommand
+                  serviceId
+                  numReplicas
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+`;

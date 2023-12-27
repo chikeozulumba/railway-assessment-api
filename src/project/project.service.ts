@@ -5,6 +5,8 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { ApolloError } from '@apollo/client/core';
+import { InjectQueue } from '@nestjs/bull';
+import { Queue } from 'bull';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library';
 import { CreateNewRailwayProjectDTO } from './dto/project.input';
 import { PrismaService } from 'src/prisma/prisma.service';
@@ -12,6 +14,7 @@ import { RailwayClientService } from 'src/railway-client/railway-client.service'
 import {
   GQL_CREATE_RAILWAY_PROJECT_MUTATION,
   GQL_DELETE_RAILWAY_PROJECT_MUTATION,
+  GQL_DEPLOY_GITHUB_REPO_TO_RAILWAY_PROJECT_MUTATION,
 } from './gql';
 import { GQL_GET_RAILWAY_PROJECT_DEPLOYMENTS_QUERY } from './gql/query';
 import { CacheService } from 'src/cache/cache.service';
@@ -20,10 +23,58 @@ import type { AuthUser } from 'src/@types/auth';
 @Injectable()
 export class ProjectService {
   constructor(
+    @InjectQueue('QUEUE_PROJECT')
+    private readonly queue: Queue,
     private readonly prismaService: PrismaService,
     private readonly cacheService: CacheService,
     private readonly railwayClientService: RailwayClientService,
   ) {}
+
+  /**
+   * Method for deploying github repository to railway projects
+   *
+   * @param {AuthUser} user
+   * @param {string} projectId
+   * @param {string} repo
+   *
+   * @return {Project}
+   */
+  async deployGithubRepo(user: AuthUser, projectId: string, repo: string) {
+    try {
+      const project = await this.prismaService.project.findFirstOrThrow({
+        where: { id: projectId, userId: user.userId },
+        include: {
+          token: true,
+        },
+      });
+
+      const { data } = await this.railwayClientService.client.mutate({
+        mutation: GQL_DEPLOY_GITHUB_REPO_TO_RAILWAY_PROJECT_MUTATION,
+        variables: { input: { projectId: project.railwayProjectId, repo } },
+        context: {
+          headers: {
+            Authorization: 'Bearer ' + project.token.value,
+          },
+        },
+      });
+
+      if (!data.githubRepoDeploy) throw new Error();
+
+      await this.queue.add('LOAD_PROJECT_AND_SERVICES_BY_PROJECT_ID', {
+        user,
+        token: project.token,
+        projectId: project.railwayProjectId,
+      });
+
+      return true;
+    } catch (error) {
+      if (error instanceof PrismaClientKnownRequestError) {
+        throw new NotFoundException('PROJECT_NOT_FOUND');
+      }
+
+      throw error;
+    }
+  }
 
   /**
    * Method for removing railway projects

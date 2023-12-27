@@ -25,5 +25,6 @@ import { CacheModule } from 'src/cache/cache.module';
     RailwayClientService,
     UserProcessor,
   ],
+  exports: [UserProcessor],
 })
 export class UserModule {}

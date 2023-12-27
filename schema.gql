@@ -486,6 +486,7 @@ type Mutation {
   authorize(payload: AuthorizeDTO!): User!
   createNewRailwayProject(payload: CreateNewRailwayProjectDTO!): Project!
   deleteRailwayProject(id: String!): Boolean!
+  deployGithubRepo(projectId: String!, repo: String!): Boolean!
   createNewRailwayProjectService(payload: CreateNewRailwayProjectServiceDTO!): Project!
   deleteRailwayService(id: String!): Boolean!
 }
