@@ -41,7 +41,7 @@ export class AuthGuard extends PassportAuthGuard('jwt') {
         return false;
       }
 
-      token = token.replaceAll('Bearer ').trim();
+      token = token.replaceAll('Bearer ', '').trim();
 
       const decoded = jwt.verify(token, clerkPublicKey);
       const user = await this.prismaService.user.findFirst({
