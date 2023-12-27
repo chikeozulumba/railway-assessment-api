@@ -108,7 +108,7 @@ model User {
   fullName                  String? @map("full_name")
   email                     String?
   defaultRailwayTokenId     String? @unique @map("default_railway_token") @db.ObjectId
-  defaultRailwayToken       Token?  @relation(fields: [defaultRailwayTokenId], references: [id], onDelete: NoAction, onUpdate: Cascade)
+  defaultRailwayToken       Token?  @relation(fields: [defaultRailwayTokenId], references: [id], onDelete: SetNull, onUpdate: SetNull)
   railwayId                 String? @map("railway_id")
   railwayregistrationStatus String? @map("railway_registration_status")
   railwayAccountStatus      String? @map("railway_account_status")
