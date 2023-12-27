@@ -18,7 +18,7 @@ import {
 } from './gql';
 import { RemoveRailwayToken } from './models/token.model';
 import { ConnectRailwayAccountDTO } from './dto/user.input';
-import type { Project, Token, User, UserRepository } from 'src/models';
+import type { Project, Token, User } from 'src/models';
 import type { AuthUser } from 'src/@types/auth';
 
 @Injectable()
@@ -159,7 +159,7 @@ export class UserService {
   async fetchUserGithubRepositories(
     { userId }: AuthUser,
     tokenId?: string,
-  ): Promise<Partial<UserRepository>[]> {
+  ): Promise<Partial<any>[]> {
     const key = `GITHUB-REPO-${userId}`.toLowerCase().replaceAll('/', '-');
     const cachedData = await this.cacheService.get<string | null>(key);
 
