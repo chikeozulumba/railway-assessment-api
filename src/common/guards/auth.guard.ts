@@ -34,12 +34,14 @@ export class AuthGuard extends PassportAuthGuard('jwt') {
       const sessionToken = request.cookies['__session'];
       const headerToken = request.headers['authorization'];
 
-      const token = sessionToken || headerToken;
+      let token = sessionToken || headerToken;
       this.logger.debug(request.body?.operationName)
 
       if (!token) {
         return false;
       }
+
+      token = token.replaceAll('Bearer ').trim();
 
       const decoded = jwt.verify(token, clerkPublicKey);
       const user = await this.prismaService.user.findFirst({
