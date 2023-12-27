@@ -4,35 +4,33 @@
 
 directive @upper on FIELD_DEFINITION
 
-type ProfileCountAggregate {
+type ProjectCountAggregate {
   id: Int!
   userId: Int!
-  railwayId: Int!
-  email: Int!
+  tokenId: Int!
+  railwayProjectId: Int!
   name: Int!
-  username: Int!
-  avatar: Int!
-  currentCost: Int!
-  estimatedCost: Int!
-  registrationStatus: Int!
-  status: Int!
+  description: Int!
+  projectCreatedAt: Int!
+  projectUpdatedAt: Int!
+  prDeploys: Int!
+  prForks: Int!
   createdAt: Int!
   updatedAt: Int!
   _all: Int!
 }
 
-type ProfileMinAggregate {
+type ProjectMinAggregate {
   id: String
   userId: String
-  railwayId: String
-  email: String
+  tokenId: String
+  railwayProjectId: String
   name: String
-  username: String
-  avatar: String
-  currentCost: String
-  estimatedCost: String
-  registrationStatus: String
-  status: String
+  description: String
+  projectCreatedAt: DateTime
+  projectUpdatedAt: DateTime
+  prDeploys: Boolean
+  prForks: Boolean
   createdAt: DateTime
   updatedAt: DateTime
 }
@@ -42,24 +40,23 @@ A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date
 """
 scalar DateTime
 
-type ProfileMaxAggregate {
+type ProjectMaxAggregate {
   id: String
   userId: String
-  railwayId: String
-  email: String
+  tokenId: String
+  railwayProjectId: String
   name: String
-  username: String
-  avatar: String
-  currentCost: String
-  estimatedCost: String
-  registrationStatus: String
-  status: String
+  description: String
+  projectCreatedAt: DateTime
+  projectUpdatedAt: DateTime
+  prDeploys: Boolean
+  prForks: Boolean
   createdAt: DateTime
   updatedAt: DateTime
 }
 
-type ProfileCount {
-  projects: Int!
+type ProjectCount {
+  services: Int!
 }
 
 type ServiceInstance {
@@ -108,46 +105,6 @@ type Service {
   _count: ServiceCount!
 }
 
-type ProjectCount {
-  services: Int!
-}
-
-type Project {
-  id: ID!
-  userId: String!
-  tokenId: String
-  railwayProjectId: String!
-  name: String
-  description: String
-  projectCreatedAt: DateTime
-  projectUpdatedAt: DateTime
-  prDeploys: Boolean
-  prForks: Boolean
-  createdAt: DateTime!
-  updatedAt: DateTime!
-  token: Token
-  user: User!
-  services: [Service!]
-  _count: ProjectCount!
-}
-
-type TokenCount {
-  projects: Int!
-}
-
-type Token {
-  id: ID!
-  userId: String
-  name: String
-  value: String!
-  isDefault: Boolean
-  createdAt: DateTime!
-  updatedAt: DateTime!
-  user: User
-  projects: [Project!]
-  _count: TokenCount!
-}
-
 type UserCount {
   projects: Int!
   services: Int!
@@ -172,50 +129,40 @@ type User {
   _count: UserCount!
 }
 
-type ProjectCountAggregate {
-  id: Int!
-  userId: Int!
-  tokenId: Int!
-  railwayProjectId: Int!
-  name: Int!
-  description: Int!
-  projectCreatedAt: Int!
-  projectUpdatedAt: Int!
-  prDeploys: Int!
-  prForks: Int!
-  createdAt: Int!
-  updatedAt: Int!
-  _all: Int!
+type TokenCount {
+  projects: Int!
 }
 
-type ProjectMinAggregate {
-  id: String
+type Token {
+  id: ID!
   userId: String
+  name: String
+  value: String!
+  isDefault: Boolean
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  user: User
+  projects: [Project!]
+  _count: TokenCount!
+}
+
+type Project {
+  id: ID!
+  userId: String!
   tokenId: String
-  railwayProjectId: String
+  railwayProjectId: String!
   name: String
   description: String
   projectCreatedAt: DateTime
   projectUpdatedAt: DateTime
   prDeploys: Boolean
   prForks: Boolean
-  createdAt: DateTime
-  updatedAt: DateTime
-}
-
-type ProjectMaxAggregate {
-  id: String
-  userId: String
-  tokenId: String
-  railwayProjectId: String
-  name: String
-  description: String
-  projectCreatedAt: DateTime
-  projectUpdatedAt: DateTime
-  prDeploys: Boolean
-  prForks: Boolean
-  createdAt: DateTime
-  updatedAt: DateTime
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  token: Token
+  user: User!
+  services: [Service!]
+  _count: ProjectCount!
 }
 
 type ServiceCountAggregate {
@@ -382,87 +329,21 @@ type UserMaxAggregate {
   updatedAt: DateTime
 }
 
-type UserRepositoryCountAggregate {
-  id: Int!
-  userId: Int!
-  repoId: Int!
-  tokenId: Int!
-  name: Int!
-  fullName: Int!
-  defaultBranch: Int!
-  installationId: Int!
-  isPrivate: Int!
-  branchesLoaded: Int!
-  branches: Int!
-  createdAt: Int!
-  updatedAt: Int!
-  _all: Int!
-}
-
-type UserRepositoryAvgAggregate {
-  repoId: Float
-}
-
-type UserRepositorySumAggregate {
-  repoId: Int
-}
-
-type UserRepositoryMinAggregate {
-  id: String
-  userId: String
-  repoId: Int
-  tokenId: String
-  name: String
-  fullName: String
-  defaultBranch: String
-  installationId: String
-  isPrivate: Boolean
-  branchesLoaded: Boolean
-  createdAt: DateTime
-  updatedAt: DateTime
-}
-
-type UserRepositoryMaxAggregate {
-  id: String
-  userId: String
-  repoId: Int
-  tokenId: String
-  name: String
-  fullName: String
-  defaultBranch: String
-  installationId: String
-  isPrivate: Boolean
-  branchesLoaded: Boolean
-  createdAt: DateTime
-  updatedAt: DateTime
-}
-
-type UserRepository {
-  id: ID!
-  userId: String!
-  repoId: Int!
-  tokenId: String!
-  name: String
-  fullName: String
-  defaultBranch: String
-  installationId: String
-  isPrivate: Boolean
-  branchesLoaded: Boolean
-  branches: JSON
-  createdAt: DateTime!
-  updatedAt: DateTime!
-  user: User!
-  token: Token!
-}
-
 type RemoveRailwayToken {
   status: String!
+}
+
+type UserGithubRepositoryDTO {
+  id: String!
+  fullName: String!
+  defaultBranch: String!
+  isPrivate: Boolean!
 }
 
 type Query {
   getRailwayTokens: [Token!]!
   railwayProjects: [Project!]!
-  fetchUserGithubRepositories(tokenId: String): [UserRepository!]!
+  fetchUserGithubRepositories(tokenId: String): [UserGithubRepositoryDTO!]!
   fetchUserGithubRepositoryBranches(repo: String!, tokenId: String): [String!]!
   me: User!
   getRailwayProject(projectId: String!): Project!
