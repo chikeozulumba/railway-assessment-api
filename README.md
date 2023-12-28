@@ -19,6 +19,7 @@ Also ensure you have [Clerk](https://clerk.com/) setup and have installed the en
 ## Installation
 
 ```bash
+
 # Install dependencies
 $ pnpm install
 
@@ -47,3 +48,7 @@ The application has a [Dockerfile](Dockerfile) to enable you build and deploy on
 # build only
 $ pnpm run build
 ```
+
+## Deployment
+
+The application source code is currently delpoyed at Railway under the domain [api.yourwish.app](api.yourwish.app)
